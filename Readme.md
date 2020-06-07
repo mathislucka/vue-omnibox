@@ -9,3 +9,5 @@ Simple search box for Vue applications.
 - support for async requests
 
 # Demo
+
+[See the demo...](https://mathislucka.github.io/vue-omnibox-demo/)
