@@ -1,0 +1,19 @@
+{
+  "name": "vue-omnibox",
+  "version": "0.1.0",
+  "description": "A search box for Vue applications.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mathis Lucka",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^2.14.0",
+    "vue": "^2.6.11",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "dependencies": {
+    "rollup-plugin-vue": "^5.1.9"
+  }
+}
