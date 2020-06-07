@@ -1,6 +1,8 @@
 <template>
   <div class="om-root">
-    <div class="om-search-container">
+    <div
+      class="om-search-container"
+      :class="{ 'om-has-focus': isInputFocused }">
       <button type="button" class="om-search" @click.prevent="triggerSearch">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z"></path></svg>
       </button>
@@ -8,9 +10,9 @@
         ref="input"
         class="om-input single-line"
         :class="{
-          'width--auto': this.isInputFocused,
-          'width--start': this.isInputFocused && this.currentSearch.length === 0,
-          'width--full': !this.isInputFocused && this.currentSearch.length > 0 }"
+          'width--auto': isInputFocused,
+          'width--start': isInputFocused && currentSearch.length === 0,
+          'width--full': !isInputFocused && currentSearch.length > 0 }"
         contenteditable="true"
         @input.stop="updateValue"
         @keydown.stop="runSpecialKeys"
@@ -18,7 +20,7 @@
         @focusout="isInputFocused = false">
       </div>
       <span
-        v-if="this.currentSearch.length === 0 && !this.isInputFocused"
+        v-if="currentSearch.length === 0 && !isInputFocused"
         @click.stop.prevent="focusInput"
         class="om-placeholder">{{ placeholder }}</span>
       <span
@@ -27,7 +29,7 @@
         @click.stop.prevent="focusInput">{{ completion }}</span>
     </div>
     <div class="om-list-container">
-      <div class="om-list" v-if="currentSearch.length >= minChars && showList && isOpenList && filteredOptions.length > 0">
+      <div class="om-list" v-if="currentSearch.length >= minChars && showList && isOpenList && filteredOptions.length > 0 && isInputFocused">
         <div
           v-for="(option, idx) in filteredOptions"
           class="om-list-item"
@@ -276,5 +278,9 @@ export default {
     display: flex;
     padding: 4px 8px;
     border-radius: 3px;
+  }
+
+  .om-has-focus {
+    border: 2px solid navy;
   }
 </style>
