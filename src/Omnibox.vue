@@ -35,7 +35,7 @@
           class="om-list-item"
           :class="{ 'om-highlight': idx === listPosition }"
           :key="option[label]"
-          @click.stop.prevent="selectCurrentOption(option)">
+          @mousedown.stop.prevent="selectCurrentOption(option)">
           <slot name="option" v-bind:option="option">
             {{ option[label] }}
           </slot>
