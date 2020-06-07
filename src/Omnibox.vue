@@ -116,17 +116,19 @@ export default {
   methods: {
     focusInput () {
       const el = this.$refs.input
-      let range = document.createRange()
-      let sel = window.getSelection()
-      let node = el.childNodes[0]
-      range.setStart(node, node.textContent.length)
-      range.collapse(true)
-      sel.removeAllRanges()
-      sel.addRange(range)
+      if (this.currentSearch !== '') {
+        let range = document.createRange()
+        let sel = window.getSelection()
+        let node = el.childNodes[0]
+        range.setStart(node, node.textContent.length)
+        range.collapse(true)
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
       el.focus()
     },
     getTextContent (el = this.$refs.input) {
-      return [].reduce.call(el.childNodes, function(a, b) { return a + (b.nodeType === 3 ? b.textContent : ''); }, '')
+      return el.textContent
     },
     runSpecialKeys (e) {
       if (e.code === 'Tab' && this.tabCompletion) {
@@ -162,7 +164,7 @@ export default {
       this.focusInput()
     },
     setTextContent (value, el = this.$refs.input) {
-      el.childNodes[0].textContent = value
+      el.textContent = value
     },
     triggerSearch () {
       this.$emit('searched', this.currentSearch)
@@ -174,11 +176,6 @@ export default {
       this.currentSearch = content
       this.isOpenList = true
     }
-  },
-  mounted () {
-    const el = this.$refs.input
-    const txt = document.createTextNode('')
-    el.prepend(txt)
   }
 }
 </script>
