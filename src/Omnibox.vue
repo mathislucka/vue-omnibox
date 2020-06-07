@@ -251,6 +251,7 @@ export default {
     border-bottom: 1px solid lightgray;
     padding: 4px 8px;
     background-color: white;
+    z-index: 1001;
   }
   .om-highlight {
     background-color: lightgrey;
