@@ -11,3 +11,11 @@ Simple search box for Vue applications.
 # Demo
 
 [See the demo...](https://mathislucka.github.io/vue-omnibox-demo/)
+
+# Roadmap
+
+- optimize accessibility
+- make CSS more robust
+- optimize for mobile
+- make IE11 compatible
+- add loading state
