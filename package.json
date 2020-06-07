@@ -2,7 +2,7 @@
   "name": "vue-omnibox",
   "version": "0.1.0",
   "description": "A search box for Vue applications.",
-  "main": "index.esm.min.js",
+  "main": "dist/index.esm.min.js",
   "repository": {},
   "scripts": {
     "build": "rollup --config rollup.config.js"
