@@ -87,7 +87,7 @@ var indexedObject = fails(function () {
 // `RequireObjectCoercible` abstract operation
 // https://tc39.github.io/ecma262/#sec-requireobjectcoercible
 var requireObjectCoercible = function (it) {
-  if (it == undefined) throw TypeError("Can't call method on " + it);
+  if (it == undefined) { throw TypeError("Can't call method on " + it); }
   return it;
 };
 
@@ -108,11 +108,11 @@ var isObject = function (it) {
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
 var toPrimitive = function (input, PREFERRED_STRING) {
-  if (!isObject(input)) return input;
+  if (!isObject(input)) { return input; }
   var fn, val;
-  if (PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject(val = fn.call(input))) return val;
-  if (typeof (fn = input.valueOf) == 'function' && !isObject(val = fn.call(input))) return val;
-  if (!PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject(val = fn.call(input))) return val;
+  if (PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject(val = fn.call(input))) { return val; }
+  if (typeof (fn = input.valueOf) == 'function' && !isObject(val = fn.call(input))) { return val; }
+  if (!PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject(val = fn.call(input))) { return val; }
   throw TypeError("Can't convert object to primitive value");
 };
 
@@ -144,10 +144,10 @@ var nativeGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 var f$1 = descriptors ? nativeGetOwnPropertyDescriptor : function getOwnPropertyDescriptor(O, P) {
   O = toIndexedObject(O);
   P = toPrimitive(P, true);
-  if (ie8DomDefine) try {
+  if (ie8DomDefine) { try {
     return nativeGetOwnPropertyDescriptor(O, P);
-  } catch (error) { /* empty */ }
-  if (has(O, P)) return createPropertyDescriptor(!objectPropertyIsEnumerable.f.call(O, P), O[P]);
+  } catch (error) { /* empty */ } }
+  if (has(O, P)) { return createPropertyDescriptor(!objectPropertyIsEnumerable.f.call(O, P), O[P]); }
 };
 
 var objectGetOwnPropertyDescriptor = {
@@ -168,11 +168,11 @@ var f$2 = descriptors ? nativeDefineProperty : function defineProperty(O, P, Att
   anObject(O);
   P = toPrimitive(P, true);
   anObject(Attributes);
-  if (ie8DomDefine) try {
+  if (ie8DomDefine) { try {
     return nativeDefineProperty(O, P, Attributes);
-  } catch (error) { /* empty */ }
-  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported');
-  if ('value' in Attributes) O[P] = Attributes.value;
+  } catch (error) { /* empty */ } }
+  if ('get' in Attributes || 'set' in Attributes) { throw TypeError('Accessors not supported'); }
+  if ('value' in Attributes) { O[P] = Attributes.value; }
   return O;
 };
 
@@ -304,20 +304,20 @@ var TEMPLATE = String(String).split('String');
   var simple = options ? !!options.enumerable : false;
   var noTargetGet = options ? !!options.noTargetGet : false;
   if (typeof value == 'function') {
-    if (typeof key == 'string' && !has(value, 'name')) createNonEnumerableProperty(value, 'name', key);
+    if (typeof key == 'string' && !has(value, 'name')) { createNonEnumerableProperty(value, 'name', key); }
     enforceInternalState(value).source = TEMPLATE.join(typeof key == 'string' ? key : '');
   }
   if (O === global_1) {
-    if (simple) O[key] = value;
-    else setGlobal(key, value);
+    if (simple) { O[key] = value; }
+    else { setGlobal(key, value); }
     return;
   } else if (!unsafe) {
     delete O[key];
   } else if (!noTargetGet && O[key]) {
     simple = true;
   }
-  if (simple) O[key] = value;
-  else createNonEnumerableProperty(O, key, value);
+  if (simple) { O[key] = value; }
+  else { createNonEnumerableProperty(O, key, value); }
 // add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
 })(Function.prototype, 'toString', function toString() {
   return typeof this == 'function' && getInternalState(this).source || inspectSource(this);
@@ -372,14 +372,14 @@ var createMethod = function (IS_INCLUDES) {
     var value;
     // Array#includes uses SameValueZero equality algorithm
     // eslint-disable-next-line no-self-compare
-    if (IS_INCLUDES && el != el) while (length > index) {
+    if (IS_INCLUDES && el != el) { while (length > index) {
       value = O[index++];
       // eslint-disable-next-line no-self-compare
-      if (value != value) return true;
+      if (value != value) { return true; }
     // Array#indexOf ignores holes, Array#includes - not
-    } else for (;length > index; index++) {
-      if ((IS_INCLUDES || index in O) && O[index] === el) return IS_INCLUDES || index || 0;
-    } return !IS_INCLUDES && -1;
+    } } else { for (;length > index; index++) {
+      if ((IS_INCLUDES || index in O) && O[index] === el) { return IS_INCLUDES || index || 0; }
+    } } return !IS_INCLUDES && -1;
   };
 };
 
@@ -400,11 +400,11 @@ var objectKeysInternal = function (object, names) {
   var i = 0;
   var result = [];
   var key;
-  for (key in O) !has(hiddenKeys, key) && has(O, key) && result.push(key);
+  for (key in O) { !has(hiddenKeys, key) && has(O, key) && result.push(key); }
   // Don't enum bug & hidden keys
-  while (names.length > i) if (has(O, key = names[i++])) {
+  while (names.length > i) { if (has(O, key = names[i++])) {
     ~indexOf(result, key) || result.push(key);
-  }
+  } }
   return result;
 };
 
@@ -450,7 +450,7 @@ var copyConstructorProperties = function (target, source) {
   var getOwnPropertyDescriptor = objectGetOwnPropertyDescriptor.f;
   for (var i = 0; i < keys.length; i++) {
     var key = keys[i];
-    if (!has(target, key)) defineProperty(target, key, getOwnPropertyDescriptor(source, key));
+    if (!has(target, key)) { defineProperty(target, key, getOwnPropertyDescriptor(source, key)); }
   }
 };
 
@@ -507,16 +507,16 @@ var _export = function (options, source) {
   } else {
     target = (global_1[TARGET] || {}).prototype;
   }
-  if (target) for (key in source) {
+  if (target) { for (key in source) {
     sourceProperty = source[key];
     if (options.noTargetGet) {
       descriptor = getOwnPropertyDescriptor$1(target, key);
       targetProperty = descriptor && descriptor.value;
-    } else targetProperty = target[key];
+    } else { targetProperty = target[key]; }
     FORCED = isForced_1(GLOBAL ? key : TARGET + (STATIC ? '.' : '#') + key, options.forced);
     // contained in target
     if (!FORCED && targetProperty !== undefined) {
-      if (typeof sourceProperty === typeof targetProperty) continue;
+      if (typeof sourceProperty === typeof targetProperty) { continue; }
       copyConstructorProperties(sourceProperty, targetProperty);
     }
     // add a flag to not completely full polyfills
@@ -525,7 +525,7 @@ var _export = function (options, source) {
     }
     // extend global
     redefine(target, key, sourceProperty, options);
-  }
+  } }
 };
 
 var aFunction$1 = function (it) {
@@ -537,7 +537,7 @@ var aFunction$1 = function (it) {
 // optional / simple context binding
 var functionBindContext = function (fn, that, length) {
   aFunction$1(fn);
-  if (that === undefined) return fn;
+  if (that === undefined) { return fn; }
   switch (length) {
     case 0: return function () {
       return fn.call(that);
@@ -587,8 +587,8 @@ var createWellKnownSymbol = useSymbolAsUid ? Symbol$1 : Symbol$1 && Symbol$1.wit
 
 var wellKnownSymbol = function (name) {
   if (!has(WellKnownSymbolsStore, name)) {
-    if (nativeSymbol && has(Symbol$1, name)) WellKnownSymbolsStore[name] = Symbol$1[name];
-    else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
+    if (nativeSymbol && has(Symbol$1, name)) { WellKnownSymbolsStore[name] = Symbol$1[name]; }
+    else { WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name); }
   } return WellKnownSymbolsStore[name];
 };
 
@@ -601,10 +601,10 @@ var arraySpeciesCreate = function (originalArray, length) {
   if (isArray(originalArray)) {
     C = originalArray.constructor;
     // cross-realm fallback
-    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
+    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) { C = undefined; }
     else if (isObject(C)) {
       C = C[SPECIES];
-      if (C === null) C = undefined;
+      if (C === null) { C = undefined; }
     }
   } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
 };
@@ -628,19 +628,19 @@ var createMethod$1 = function (TYPE) {
     var create = specificCreate || arraySpeciesCreate;
     var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
     var value, result;
-    for (;length > index; index++) if (NO_HOLES || index in self) {
+    for (;length > index; index++) { if (NO_HOLES || index in self) {
       value = self[index];
       result = boundFunction(value, index, O);
       if (TYPE) {
-        if (IS_MAP) target[index] = result; // map
-        else if (result) switch (TYPE) {
+        if (IS_MAP) { target[index] = result; } // map
+        else if (result) { switch (TYPE) {
           case 3: return true;              // some
           case 5: return value;             // find
           case 6: return index;             // findIndex
           case 2: push.call(target, value); // filter
-        } else if (IS_EVERY) return false;  // every
+        } } else if (IS_EVERY) { return false; }  // every
       }
-    }
+    } }
     return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
   };
 };
@@ -683,7 +683,7 @@ if (v8) {
   match = engineUserAgent.match(/Edge\/(\d+)/);
   if (!match || match[1] >= 74) {
     match = engineUserAgent.match(/Chrome\/(\d+)/);
-    if (match) version = match[1];
+    if (match) { version = match[1]; }
   }
 }
 
@@ -711,19 +711,19 @@ var cache = {};
 var thrower = function (it) { throw it; };
 
 var arrayMethodUsesToLength = function (METHOD_NAME, options) {
-  if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
-  if (!options) options = {};
+  if (has(cache, METHOD_NAME)) { return cache[METHOD_NAME]; }
+  if (!options) { options = {}; }
   var method = [][METHOD_NAME];
   var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
   var argument0 = has(options, 0) ? options[0] : thrower;
   var argument1 = has(options, 1) ? options[1] : undefined;
 
   return cache[METHOD_NAME] = !!method && !fails(function () {
-    if (ACCESSORS && !descriptors) return true;
+    if (ACCESSORS && !descriptors) { return true; }
     var O = { length: -1 };
 
-    if (ACCESSORS) defineProperty(O, 1, { enumerable: true, get: thrower });
-    else O[1] = 1;
+    if (ACCESSORS) { defineProperty(O, 1, { enumerable: true, get: thrower }); }
+    else { O[1] = 1; }
 
     method.call(O, argument0, argument1);
   });
@@ -755,7 +755,7 @@ var createMethod$2 = function (IS_RIGHT) {
     var length = toLength(O.length);
     var index = IS_RIGHT ? length - 1 : 0;
     var i = IS_RIGHT ? -1 : 1;
-    if (argumentsLength < 2) while (true) {
+    if (argumentsLength < 2) { while (true) {
       if (index in self) {
         memo = self[index];
         index += i;
@@ -765,10 +765,10 @@ var createMethod$2 = function (IS_RIGHT) {
       if (IS_RIGHT ? index < 0 : length <= index) {
         throw TypeError('Reduce of empty array with no initial value');
       }
-    }
-    for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
+    } }
+    for (;IS_RIGHT ? index >= 0 : length > index; index += i) { if (index in self) {
       memo = callbackfn(memo, self[index], index, O);
-    }
+    } }
     return memo;
   };
 };
@@ -827,8 +827,8 @@ var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? functio
   return function setPrototypeOf(O, proto) {
     anObject(O);
     aPossiblePrototype(proto);
-    if (CORRECT_SETTER) setter.call(O, proto);
-    else O.__proto__ = proto;
+    if (CORRECT_SETTER) { setter.call(O, proto); }
+    else { O.__proto__ = proto; }
     return O;
   };
 }() : undefined);
@@ -844,7 +844,7 @@ var inheritIfRequired = function ($this, dummy, Wrapper) {
     NewTarget !== Wrapper &&
     isObject(NewTargetPrototype = NewTarget.prototype) &&
     NewTargetPrototype !== Wrapper.prototype
-  ) objectSetPrototypeOf($this, NewTargetPrototype);
+  ) { objectSetPrototypeOf($this, NewTargetPrototype); }
   return $this;
 };
 
@@ -862,7 +862,7 @@ var objectDefineProperties = descriptors ? Object.defineProperties : function de
   var length = keys.length;
   var index = 0;
   var key;
-  while (length > index) objectDefineProperty.f(O, key = keys[index++], Properties[key]);
+  while (length > index) { objectDefineProperty.f(O, key = keys[index++], Properties[key]); }
   return O;
 };
 
@@ -919,7 +919,7 @@ var NullProtoObject = function () {
   } catch (error) { /* ignore */ }
   NullProtoObject = activeXDocument ? NullProtoObjectViaActiveX(activeXDocument) : NullProtoObjectViaIFrame();
   var length = enumBugKeys.length;
-  while (length--) delete NullProtoObject[PROTOTYPE][enumBugKeys[length]];
+  while (length--) { delete NullProtoObject[PROTOTYPE][enumBugKeys[length]]; }
   return NullProtoObject();
 };
 
@@ -935,7 +935,7 @@ var objectCreate = Object.create || function create(O, Properties) {
     EmptyConstructor[PROTOTYPE] = null;
     // add "__proto__" for Object.getPrototypeOf polyfill
     result[IE_PROTO] = O;
-  } else result = NullProtoObject();
+  } else { result = NullProtoObject(); }
   return Properties === undefined ? result : objectDefineProperties(result, Properties);
 };
 
@@ -951,8 +951,8 @@ var rtrim = RegExp(whitespace + whitespace + '*$');
 var createMethod$3 = function (TYPE) {
   return function ($this) {
     var string = String(requireObjectCoercible($this));
-    if (TYPE & 1) string = string.replace(ltrim, '');
-    if (TYPE & 2) string = string.replace(rtrim, '');
+    if (TYPE & 1) { string = string.replace(ltrim, ''); }
+    if (TYPE & 2) { string = string.replace(rtrim, ''); }
     return string;
   };
 };
@@ -991,7 +991,7 @@ var toNumber = function (argument) {
     first = it.charCodeAt(0);
     if (first === 43 || first === 45) {
       third = it.charCodeAt(2);
-      if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
+      if (third === 88 || third === 120) { return NaN; } // Number('+0x1') should be NaN, old V8 fix
     } else if (first === 48) {
       switch (it.charCodeAt(1)) {
         case 66: case 98: radix = 2; maxCode = 49; break; // fast equal of /^0b[01]+$/i
@@ -1004,7 +1004,7 @@ var toNumber = function (argument) {
         code = digits.charCodeAt(index);
         // parseInt parses a string to a first unavailable symbol
         // but ToNumber should return NaN if a string contains unavailable symbols
-        if (code < 48 || code > maxCode) return NaN;
+        if (code < 48 || code > maxCode) { return NaN; }
       } return parseInt(digits, radix);
     }
   } return +it;
@@ -1051,12 +1051,12 @@ var isRegexp = function (it) {
 var regexpFlags = function () {
   var that = anObject(this);
   var result = '';
-  if (that.global) result += 'g';
-  if (that.ignoreCase) result += 'i';
-  if (that.multiline) result += 'm';
-  if (that.dotAll) result += 's';
-  if (that.unicode) result += 'u';
-  if (that.sticky) result += 'y';
+  if (that.global) { result += 'g'; }
+  if (that.ignoreCase) { result += 'i'; }
+  if (that.multiline) { result += 'm'; }
+  if (that.dotAll) { result += 's'; }
+  if (that.unicode) { result += 'u'; }
+  if (that.sticky) { result += 'y'; }
   return result;
 };
 
@@ -1141,15 +1141,15 @@ if (FORCED) {
     }
 
     if (CORRECT_NEW) {
-      if (patternIsRegExp && !flagsAreUndefined) pattern = pattern.source;
+      if (patternIsRegExp && !flagsAreUndefined) { pattern = pattern.source; }
     } else if (pattern instanceof RegExpWrapper) {
-      if (flagsAreUndefined) flags = regexpFlags.call(pattern);
+      if (flagsAreUndefined) { flags = regexpFlags.call(pattern); }
       pattern = pattern.source;
     }
 
     if (UNSUPPORTED_Y$1) {
       sticky = !!flags && flags.indexOf('y') > -1;
-      if (sticky) flags = flags.replace(/y/g, '');
+      if (sticky) { flags = flags.replace(/y/g, ''); }
     }
 
     var result = inheritIfRequired(
@@ -1158,7 +1158,7 @@ if (FORCED) {
       RegExpWrapper
     );
 
-    if (UNSUPPORTED_Y$1 && sticky) setInternalState(result, { sticky: sticky });
+    if (UNSUPPORTED_Y$1 && sticky) { setInternalState(result, { sticky: sticky }); }
 
     return result;
   };
@@ -1171,7 +1171,7 @@ if (FORCED) {
   };
   var keys$2 = getOwnPropertyNames$1(NativeRegExp);
   var index = 0;
-  while (keys$2.length > index) proxy(keys$2[index++]);
+  while (keys$2.length > index) { proxy(keys$2[index++]); }
   RegExpPrototype.constructor = RegExpWrapper;
   RegExpWrapper.prototype = RegExpPrototype;
   redefine(global_1, 'RegExp', RegExpWrapper);
@@ -1234,7 +1234,7 @@ if (PATCH) {
     if (NPCG_INCLUDED) {
       reCopy = new RegExp('^' + source + '$(?!\\s)', flags);
     }
-    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re.lastIndex;
+    if (UPDATES_LAST_INDEX_WRONG) { lastIndex = re.lastIndex; }
 
     match = nativeExec.call(sticky ? reCopy : re, strCopy);
 
@@ -1244,7 +1244,7 @@ if (PATCH) {
         match[0] = match[0].slice(charsAdded);
         match.index = re.lastIndex;
         re.lastIndex += match[0].length;
-      } else re.lastIndex = 0;
+      } else { re.lastIndex = 0; }
     } else if (UPDATES_LAST_INDEX_WRONG && match) {
       re.lastIndex = re.global ? match.index + match[0].length : lastIndex;
     }
@@ -1252,8 +1252,10 @@ if (PATCH) {
       // Fix browsers whose `exec` methods don't consistently return `undefined`
       // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
       nativeReplace.call(match[0], reCopy, function () {
+        var arguments$1 = arguments;
+
         for (i = 1; i < arguments.length - 2; i++) {
-          if (arguments[i] === undefined) match[i] = undefined;
+          if (arguments$1[i] === undefined) { match[i] = undefined; }
         }
       });
     }
@@ -1410,7 +1412,7 @@ var fixRegexpWellKnownSymbolLogic = function (KEY, length, exec, sham) {
     );
   }
 
-  if (sham) createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true);
+  if (sham) { createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true); }
 };
 
 // `String.prototype.{ codePointAt, at }` methods implementation
@@ -1420,7 +1422,7 @@ var createMethod$4 = function (CONVERT_TO_STRING) {
     var position = toInteger(pos);
     var size = S.length;
     var first, second;
-    if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
+    if (position < 0 || position >= size) { return CONVERT_TO_STRING ? '' : undefined; }
     first = S.charCodeAt(position);
     return first < 0xD800 || first > 0xDBFF || position + 1 === size
       || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
@@ -1479,12 +1481,12 @@ fixRegexpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCal
     // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@match
     function (regexp) {
       var res = maybeCallNative(nativeMatch, regexp, this);
-      if (res.done) return res.value;
+      if (res.done) { return res.value; }
 
       var rx = anObject(regexp);
       var S = String(this);
 
-      if (!rx.global) return regexpExecAbstract(rx, S);
+      if (!rx.global) { return regexpExecAbstract(rx, S); }
 
       var fullUnicode = rx.unicode;
       rx.lastIndex = 0;
@@ -1494,7 +1496,7 @@ fixRegexpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCal
       while ((result = regexpExecAbstract(rx, S)) !== null) {
         var matchStr = String(result[0]);
         A[n] = matchStr;
-        if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+        if (matchStr === '') { rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode); }
         n++;
       }
       return n === 0 ? null : A;
@@ -1553,56 +1555,56 @@ var script = {
     closeOnSelect: {
       type: Boolean,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return true;
       }
     },
     disableSearch: {
       type: Boolean,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return false;
       }
     },
     label: {
       type: String,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return 'label';
       }
     },
     minChars: {
       type: Number,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return 3;
       }
     },
     options: {
       type: Array,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return [];
       }
     },
     placeholder: {
       type: String,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return 'Search...';
       }
     },
     showList: {
       type: Boolean,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return true;
       }
     },
     tabCompletion: {
       type: Boolean,
       required: false,
-      default: function _default() {
+      "default": function _default() {
         return true;
       }
     }
@@ -1623,9 +1625,9 @@ var script = {
       return this.options.reduce(function (acc, val) {
         var isMatching = val[_this.label].match(reg);
 
-        if (_this.currentSearch === '') return '';
-        if (acc == '' && isMatching) return isMatching[2];
-        if (isMatching && val.length < acc.length) return isMatching[2];
+        if (_this.currentSearch === '') { return ''; }
+        if (acc == '' && isMatching) { return isMatching[2]; }
+        if (isMatching && val.length < acc.length) { return isMatching[2]; }
         return acc;
       }, '');
     },
@@ -1720,7 +1722,7 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
         shadowMode = false;
     }
     // Vue.extend constructor export interop.
-    const options = typeof script === 'function' ? script.options : script;
+    var options = typeof script === 'function' ? script.options : script;
     // render functions
     if (template && template.render) {
         options.render = template.render;
@@ -1735,7 +1737,7 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
     if (scopeId) {
         options._scopeId = scopeId;
     }
-    let hook;
+    var hook;
     if (moduleIdentifier) {
         // server build
         hook = function (context) {
@@ -1773,7 +1775,7 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
     if (hook) {
         if (options.functional) {
             // register for functional component in vue file
-            const originalRender = options.render;
+            var originalRender = options.render;
             options.render = function renderWithStyleInjection(h, context) {
                 hook.call(context);
                 return originalRender(h, context);
@@ -1781,26 +1783,26 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
         }
         else {
             // inject component registration as beforeCreate hook
-            const existing = options.beforeCreate;
+            var existing = options.beforeCreate;
             options.beforeCreate = existing ? [].concat(existing, hook) : [hook];
         }
     }
     return script;
 }
 
-const isOldIE = typeof navigator !== 'undefined' &&
+var isOldIE = typeof navigator !== 'undefined' &&
     /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
 function createInjector(context) {
-    return (id, style) => addStyle(id, style);
+    return function (id, style) { return addStyle(id, style); };
 }
-let HEAD;
-const styles = {};
+var HEAD;
+var styles = {};
 function addStyle(id, css) {
-    const group = isOldIE ? css.media || 'default' : id;
-    const style = styles[group] || (styles[group] = { ids: new Set(), styles: [] });
+    var group = isOldIE ? css.media || 'default' : id;
+    var style = styles[group] || (styles[group] = { ids: new Set(), styles: [] });
     if (!style.ids.has(id)) {
         style.ids.add(id);
-        let code = css.source;
+        var code = css.source;
         if (css.map) {
             // https://developer.chrome.com/devtools/docs/javascript-debugging
             // this makes source maps inside style tags work properly in Chrome
@@ -1815,7 +1817,7 @@ function addStyle(id, css) {
             style.element = document.createElement('style');
             style.element.type = 'text/css';
             if (css.media)
-                style.element.setAttribute('media', css.media);
+                { style.element.setAttribute('media', css.media); }
             if (HEAD === undefined) {
                 HEAD = document.head || document.getElementsByTagName('head')[0];
             }
@@ -1828,223 +1830,175 @@ function addStyle(id, css) {
                 .join('\n');
         }
         else {
-            const index = style.ids.size - 1;
-            const textNode = document.createTextNode(code);
-            const nodes = style.element.childNodes;
+            var index = style.ids.size - 1;
+            var textNode = document.createTextNode(code);
+            var nodes = style.element.childNodes;
             if (nodes[index])
-                style.element.removeChild(nodes[index]);
+                { style.element.removeChild(nodes[index]); }
             if (nodes.length)
-                style.element.insertBefore(textNode, nodes[index]);
+                { style.element.insertBefore(textNode, nodes[index]); }
             else
-                style.element.appendChild(textNode);
+                { style.element.appendChild(textNode); }
         }
     }
 }
 
 /* script */
-const __vue_script__ = script;
-
+var __vue_script__ = script;
 /* template */
-var __vue_render__ = function() {
+
+var __vue_render__ = function __vue_render__() {
   var _vm = this;
+
   var _h = _vm.$createElement;
+
   var _c = _vm._self._c || _h;
-  return _c("div", { staticClass: "om-root" }, [
-    _c(
-      "div",
-      {
-        staticClass: "om-search-container",
-        class: { "om-has-focus": _vm.isInputFocused }
+
+  return _c("div", {
+    staticClass: "om-root"
+  }, [_c("div", {
+    staticClass: "om-search-container",
+    "class": {
+      "om-has-focus": _vm.isInputFocused
+    }
+  }, [_c("button", {
+    staticClass: "om-search",
+    attrs: {
+      type: "button"
+    },
+    on: {
+      click: function click($event) {
+        $event.preventDefault();
+        return _vm.triggerSearch($event);
+      }
+    }
+  }, [_c("svg", {
+    attrs: {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 16 16",
+      width: "16",
+      height: "16"
+    }
+  }, [_c("path", {
+    attrs: {
+      "fill-rule": "evenodd",
+      d: "M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z"
+    }
+  })])]), _vm._v(" "), _c("div", {
+    ref: "input",
+    staticClass: "om-input single-line",
+    "class": {
+      "width--auto": _vm.isInputFocused,
+      "width--start": _vm.isInputFocused && _vm.currentSearch.length === 0,
+      "width--full": !_vm.isInputFocused && _vm.currentSearch.length > 0
+    },
+    attrs: {
+      contenteditable: "true"
+    },
+    on: {
+      input: function input($event) {
+        $event.stopPropagation();
+        return _vm.updateValue($event);
       },
-      [
-        _c(
-          "button",
-          {
-            staticClass: "om-search",
-            attrs: { type: "button" },
-            on: {
-              click: function($event) {
-                $event.preventDefault();
-                return _vm.triggerSearch($event)
-              }
-            }
-          },
-          [
-            _c(
-              "svg",
-              {
-                attrs: {
-                  xmlns: "http://www.w3.org/2000/svg",
-                  viewBox: "0 0 16 16",
-                  width: "16",
-                  height: "16"
-                }
-              },
-              [
-                _c("path", {
-                  attrs: {
-                    "fill-rule": "evenodd",
-                    d:
-                      "M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z"
-                  }
-                })
-              ]
-            )
-          ]
-        ),
-        _vm._v(" "),
-        _c("div", {
-          ref: "input",
-          staticClass: "om-input single-line",
-          class: {
-            "width--auto": _vm.isInputFocused,
-            "width--start":
-              _vm.isInputFocused && _vm.currentSearch.length === 0,
-            "width--full": !_vm.isInputFocused && _vm.currentSearch.length > 0
-          },
-          attrs: { contenteditable: "true" },
-          on: {
-            input: function($event) {
-              $event.stopPropagation();
-              return _vm.updateValue($event)
-            },
-            keydown: function($event) {
-              $event.stopPropagation();
-              return _vm.runSpecialKeys($event)
-            },
-            focusin: function($event) {
-              _vm.isInputFocused = true;
-            },
-            focusout: function($event) {
-              _vm.isInputFocused = false;
-            }
-          }
-        }),
-        _vm._v(" "),
-        _vm.currentSearch.length === 0 && !_vm.isInputFocused
-          ? _c(
-              "span",
-              {
-                staticClass: "om-placeholder",
-                on: {
-                  click: function($event) {
-                    $event.stopPropagation();
-                    $event.preventDefault();
-                    return _vm.focusInput($event)
-                  }
-                }
-              },
-              [_vm._v(_vm._s(_vm.placeholder))]
-            )
-          : _vm._e(),
-        _vm._v(" "),
-        _c(
-          "span",
-          {
-            directives: [
-              {
-                name: "show",
-                rawName: "v-show",
-                value: _vm.isInputFocused,
-                expression: "isInputFocused"
-              }
-            ],
-            staticClass: "om-completion",
-            on: {
-              click: function($event) {
-                $event.stopPropagation();
-                $event.preventDefault();
-                return _vm.focusInput($event)
-              }
-            }
-          },
-          [_vm._v(_vm._s(_vm.completion))]
-        )
-      ]
-    ),
-    _vm._v(" "),
-    _c("div", { staticClass: "om-list-container" }, [
-      _vm.currentSearch.length >= _vm.minChars &&
-      _vm.showList &&
-      _vm.isOpenList &&
-      _vm.filteredOptions.length > 0 &&
-      _vm.isInputFocused
-        ? _c(
-            "div",
-            { staticClass: "om-list" },
-            _vm._l(_vm.filteredOptions, function(option, idx) {
-              return _c(
-                "div",
-                {
-                  key: option[_vm.label],
-                  staticClass: "om-list-item",
-                  class: { "om-highlight": idx === _vm.listPosition },
-                  on: {
-                    mousedown: function($event) {
-                      $event.stopPropagation();
-                      $event.preventDefault();
-                      return _vm.selectCurrentOption(option)
-                    }
-                  }
-                },
-                [
-                  _vm._t(
-                    "option",
-                    [
-                      _vm._v(
-                        "\n          " +
-                          _vm._s(option[_vm.label]) +
-                          "\n        "
-                      )
-                    ],
-                    { option: option }
-                  )
-                ],
-                2
-              )
-            }),
-            0
-          )
-        : _vm._e()
-    ])
-  ])
+      keydown: function keydown($event) {
+        $event.stopPropagation();
+        return _vm.runSpecialKeys($event);
+      },
+      focusin: function focusin($event) {
+        _vm.isInputFocused = true;
+      },
+      focusout: function focusout($event) {
+        _vm.isInputFocused = false;
+      }
+    }
+  }), _vm._v(" "), _vm.currentSearch.length === 0 && !_vm.isInputFocused ? _c("span", {
+    staticClass: "om-placeholder",
+    on: {
+      click: function click($event) {
+        $event.stopPropagation();
+        $event.preventDefault();
+        return _vm.focusInput($event);
+      }
+    }
+  }, [_vm._v(_vm._s(_vm.placeholder))]) : _vm._e(), _vm._v(" "), _c("span", {
+    directives: [{
+      name: "show",
+      rawName: "v-show",
+      value: _vm.isInputFocused,
+      expression: "isInputFocused"
+    }],
+    staticClass: "om-completion",
+    on: {
+      click: function click($event) {
+        $event.stopPropagation();
+        $event.preventDefault();
+        return _vm.focusInput($event);
+      }
+    }
+  }, [_vm._v(_vm._s(_vm.completion))])]), _vm._v(" "), _c("div", {
+    staticClass: "om-list-container"
+  }, [_vm.currentSearch.length >= _vm.minChars && _vm.showList && _vm.isOpenList && _vm.filteredOptions.length > 0 && _vm.isInputFocused ? _c("div", {
+    staticClass: "om-list"
+  }, _vm._l(_vm.filteredOptions, function (option, idx) {
+    return _c("div", {
+      key: option[_vm.label],
+      staticClass: "om-list-item",
+      "class": {
+        "om-highlight": idx === _vm.listPosition
+      },
+      on: {
+        mousedown: function mousedown($event) {
+          $event.stopPropagation();
+          $event.preventDefault();
+          return _vm.selectCurrentOption(option);
+        }
+      }
+    }, [_vm._t("option", [_vm._v("\n          " + _vm._s(option[_vm.label]) + "\n        ")], {
+      option: option
+    })], 2);
+  }), 0) : _vm._e()])]);
 };
+
 var __vue_staticRenderFns__ = [];
 __vue_render__._withStripped = true;
+/* style */
 
-  /* style */
-  const __vue_inject_styles__ = function (inject) {
-    if (!inject) return
-    inject("data-v-7e5e7c94_0", { source: "\n*[data-v-7e5e7c94] {\n  box-sizing: border-box;\n}\n.om-root[data-v-7e5e7c94] {\n  position: relative;\n}\n.om-input[data-v-7e5e7c94] {\n  display: inline-block;\n  height: 28px;\n  vertical-align: middle;\n  line-height: 28px;\n}\n.om-input[data-v-7e5e7c94]:focus {\n  border: none;\n  outline: none;\n}\n.om-completion[data-v-7e5e7c94] {\n  height: 100%;\n  width: auto;\n  max-width: 100%;\n  color: lightgray;\n  overflow: hidden;\n  line-height: 28px;\n  white-space: pre;\n}\n[contenteditable=\"true\"].single-line[data-v-7e5e7c94] {\n  white-space: pre;\n  overflow: hidden;\n}\n[contenteditable=\"true\"].single-line br[data-v-7e5e7c94] {\n  display:none;\n}\n[contenteditable=\"true\"].single-line *[data-v-7e5e7c94] {\n  display:inline;\n  white-space:nowrap;\n}\n.width--auto[data-v-7e5e7c94] {\n  width: auto;\n  max-width: calc(100% - 35px);\n}\n.width--full[data-v-7e5e7c94] {\n  width: calc(100% - 35px);\n}\n.width--start[data-v-7e5e7c94] {\n  min-width: 10px;\n}\n.om-placeholder[data-v-7e5e7c94] {\n  display: inline-block;\n  height: 100%;\n  width: 100%;\n  line-height: 28px;\n  color: darkgray;\n}\n.om-list-container[data-v-7e5e7c94] {\n  position: relative;\n}\n.om-list[data-v-7e5e7c94] {\n  position: absolute;\n  width: 100%;\n  border-left: 1px solid lightgray;\n  border-right: 1px solid lightgray;\n  border-bottom: 1px solid lightgray;\n  padding: 4px 8px;\n  background-color: white;\n  z-index: 1001;\n}\n.om-highlight[data-v-7e5e7c94] {\n  background-color: lightgrey;\n}\n.om-list-item[data-v-7e5e7c94] {\n  font-weight: 500;\n  cursor: pointer;\n}\n.om-list-item[data-v-7e5e7c94]:hover {\n  background-color: lightgray;\n}\n.om-search[data-v-7e5e7c94] {\n  vertical-align: middle;\n  background-color: transparent;\n  border: none;\n}\n.om-search-container[data-v-7e5e7c94] {\n  border: 1px solid lightgray;\n  display: flex;\n  padding: 4px 8px;\n  border-radius: 3px;\n}\n.om-has-focus[data-v-7e5e7c94] {\n  border: 2px solid navy;\n}\n", map: {"version":3,"sources":["/home/mathis/Development/vue-omnibox/src/Omnibox.vue"],"names":[],"mappings":";AAsLA;EACA,sBAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,qBAAA;EACA,YAAA;EACA,sBAAA;EACA,iBAAA;AACA;AAEA;EACA,YAAA;EACA,aAAA;AACA;AACA;EACA,YAAA;EACA,WAAA;EACA,eAAA;EACA,gBAAA;EACA,gBAAA;EACA,iBAAA;EACA,gBAAA;AACA;AACA;EACA,gBAAA;EACA,gBAAA;AACA;AACA;EACA,YAAA;AAEA;AACA;EACA,cAAA;EACA,kBAAA;AACA;AAEA;EACA,WAAA;EACA,4BAAA;AACA;AAEA;EACA,wBAAA;AACA;AAEA;EACA,eAAA;AACA;AAEA;EACA,qBAAA;EACA,YAAA;EACA,WAAA;EACA,iBAAA;EACA,eAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,kBAAA;EACA,WAAA;EACA,gCAAA;EACA,iCAAA;EACA,kCAAA;EACA,gBAAA;EACA,uBAAA;EACA,aAAA;AACA;AACA;EACA,2BAAA;AACA;AACA;EACA,gBAAA;EACA,eAAA;AACA;AAEA;EACA,2BAAA;AACA;AAEA;EACA,sBAAA;EACA,6BAAA;EACA,YAAA;AACA;AAEA;EACA,2BAAA;EACA,aAAA;EACA,gBAAA;EACA,kBAAA;AACA;AAEA;EACA,sBAAA;AACA","file":"Omnibox.vue","sourcesContent":["<template>\n  <div class=\"om-root\">\n    <div\n      class=\"om-search-container\"\n      :class=\"{ 'om-has-focus': isInputFocused }\">\n      <button type=\"button\" class=\"om-search\" @click.prevent=\"triggerSearch\">\n        <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z\"></path></svg>\n      </button>\n      <div\n        ref=\"input\"\n        class=\"om-input single-line\"\n        :class=\"{\n          'width--auto': isInputFocused,\n          'width--start': isInputFocused && currentSearch.length === 0,\n          'width--full': !isInputFocused && currentSearch.length > 0 }\"\n        contenteditable=\"true\"\n        @input.stop=\"updateValue\"\n        @keydown.stop=\"runSpecialKeys\"\n        @focusin=\"isInputFocused = true\"\n        @focusout=\"isInputFocused = false\">\n      </div>\n      <span\n        v-if=\"currentSearch.length === 0 && !isInputFocused\"\n        @click.stop.prevent=\"focusInput\"\n        class=\"om-placeholder\">{{ placeholder }}</span>\n      <span\n        v-show=\"isInputFocused\"\n        class=\"om-completion\"\n        @click.stop.prevent=\"focusInput\">{{ completion }}</span>\n    </div>\n    <div class=\"om-list-container\">\n      <div class=\"om-list\" v-if=\"currentSearch.length >= minChars && showList && isOpenList && filteredOptions.length > 0 && isInputFocused\">\n        <div\n          v-for=\"(option, idx) in filteredOptions\"\n          class=\"om-list-item\"\n          :class=\"{ 'om-highlight': idx === listPosition }\"\n          :key=\"option[label]\"\n          @mousedown.stop.prevent=\"selectCurrentOption(option)\">\n          <slot name=\"option\" v-bind:option=\"option\">\n            {{ option[label] }}\n          </slot>\n        </div>\n    </div>\n    </div>\n  </div>\n</template>\n<script>\nexport default {\n  props: {\n    closeOnSelect: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    disableSearch: {\n      type: Boolean,\n      required: false,\n      default: () => false\n    },\n    label: {\n      type: String,\n      required: false,\n      default: () => 'label'\n    },\n    minChars: {\n      type: Number,\n      required: false,\n      default: () => 3\n    },\n    options: {\n      type: Array,\n      required: false,\n      default: () => ([])\n    },\n    placeholder: {\n      type: String,\n      required: false,\n      default: () => 'Search...'\n    },\n    showList: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    tabCompletion: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    }\n  },\n  data () {\n    return {\n      currentSearch: '',\n      listPosition: -1,\n      isOpenList: true,\n      isInputFocused: false\n    }\n  },\n  computed: {\n    completion () {\n      const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')\n      return this.options.reduce((acc, val) => {\n        const isMatching = val[this.label].match(reg)\n        if (this.currentSearch === '') return ''\n        if (acc == '' && isMatching) return isMatching[2]\n        if (isMatching && val.length < acc.length) return isMatching[2]\n        return acc\n      }, '')\n    },\n    filteredOptions () {\n      const reg = new RegExp(`^${this.currentSearch}`, 'i')\n      const filtered = this.options.filter(o => o[this.label].match(reg))\n      return this.disableSearch ? this.options : filtered\n    }\n  },\n  methods: {\n    focusInput () {\n      const el = this.$refs.input\n      if (this.currentSearch !== '') {\n        let range = document.createRange()\n        let sel = window.getSelection()\n        let node = el.childNodes[0]\n        range.setStart(node, node.textContent.length)\n        range.collapse(true)\n        sel.removeAllRanges()\n        sel.addRange(range)\n      }\n      el.focus()\n    },\n    getTextContent (el = this.$refs.input) {\n      return el.textContent\n    },\n    runSpecialKeys (e) {\n      if (e.code === 'Tab' && this.tabCompletion) {\n        e.preventDefault()\n        this.currentSearch += this.completion\n        this.setTextContent(this.currentSearch)\n        this.focusInput()\n      } else if (e.code === 'ArrowDown') {\n        e.preventDefault()\n        if (this.listPosition < this.filteredOptions.length - 1) {\n          this.listPosition += 1\n        }\n      } else if (e.code === \"ArrowUp\") {\n          e.preventDefault()\n          if (this.listPosition > -1) {\n            this.listPosition -= 1\n          }\n      } else if (e.code === 'Enter') {\n        e.preventDefault()\n        if (this.listPosition > -1) {\n          this.selectCurrentOption()\n        } else {\n          this.triggerSearch()\n        }\n      }\n    },\n    selectCurrentOption (option = this.filteredOptions[this.listPosition]) {\n      this.currentSearch = option[this.label]\n      this.setTextContent(this.currentSearch)\n      this.listPosition = -1\n      this.$emit('selected', option)\n      this.isOpenList = !this.closeOnSelect\n      this.focusInput()\n    },\n    setTextContent (value, el = this.$refs.input) {\n      el.textContent = value\n    },\n    triggerSearch () {\n      this.$emit('searched', this.currentSearch)\n      this.isOpenList = !this.closeOnSelect\n    },\n    updateValue (e) {\n      const el = e.target\n      const content = this.getTextContent(el)\n      this.currentSearch = content\n      this.isOpenList = true\n    }\n  }\n}\n</script>\n<style scoped>\n  * {\n    box-sizing: border-box;\n  }\n  .om-root {\n    position: relative;\n  }\n  .om-input {\n    display: inline-block;\n    height: 28px;\n    vertical-align: middle;\n    line-height: 28px;\n  }\n\n  .om-input:focus {\n    border: none;\n    outline: none;\n  }\n  .om-completion {\n    height: 100%;\n    width: auto;\n    max-width: 100%;\n    color: lightgray;\n    overflow: hidden;\n    line-height: 28px;\n    white-space: pre;\n  }\n  [contenteditable=\"true\"].single-line {\n    white-space: pre;\n    overflow: hidden;\n  } \n  [contenteditable=\"true\"].single-line br {\n    display:none;\n\n  }\n  [contenteditable=\"true\"].single-line * {\n    display:inline;\n    white-space:nowrap;\n  }\n\n  .width--auto {\n    width: auto;\n    max-width: calc(100% - 35px);\n  }\n\n  .width--full {\n    width: calc(100% - 35px);\n  }\n\n  .width--start {\n    min-width: 10px;\n  }\n\n  .om-placeholder {\n    display: inline-block;\n    height: 100%;\n    width: 100%;\n    line-height: 28px;\n    color: darkgray;\n  }\n  .om-list-container {\n    position: relative;\n  }\n  .om-list {\n    position: absolute;\n    width: 100%;\n    border-left: 1px solid lightgray;\n    border-right: 1px solid lightgray;\n    border-bottom: 1px solid lightgray;\n    padding: 4px 8px;\n    background-color: white;\n    z-index: 1001;\n  }\n  .om-highlight {\n    background-color: lightgrey;\n  }\n  .om-list-item {\n    font-weight: 500;\n    cursor: pointer;\n  }\n\n  .om-list-item:hover {\n    background-color: lightgray;\n  }\n\n  .om-search {\n    vertical-align: middle;\n    background-color: transparent;\n    border: none;\n  }\n\n  .om-search-container {\n    border: 1px solid lightgray;\n    display: flex;\n    padding: 4px 8px;\n    border-radius: 3px;\n  }\n\n  .om-has-focus {\n    border: 2px solid navy;\n  }\n</style>\n"]}, media: undefined });
+var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
+  if (!inject) { return; }
+  inject("data-v-7e5e7c94_0", {
+    source: "\n*[data-v-7e5e7c94] {\n  box-sizing: border-box;\n}\n.om-root[data-v-7e5e7c94] {\n  position: relative;\n}\n.om-input[data-v-7e5e7c94] {\n  display: inline-block;\n  height: 28px;\n  vertical-align: middle;\n  line-height: 28px;\n}\n.om-input[data-v-7e5e7c94]:focus {\n  border: none;\n  outline: none;\n}\n.om-completion[data-v-7e5e7c94] {\n  height: 100%;\n  width: auto;\n  max-width: 100%;\n  color: lightgray;\n  overflow: hidden;\n  line-height: 28px;\n  white-space: pre;\n}\n[contenteditable=\"true\"].single-line[data-v-7e5e7c94] {\n  white-space: pre;\n  overflow: hidden;\n}\n[contenteditable=\"true\"].single-line br[data-v-7e5e7c94] {\n  display:none;\n}\n[contenteditable=\"true\"].single-line *[data-v-7e5e7c94] {\n  display:inline;\n  white-space:nowrap;\n}\n.width--auto[data-v-7e5e7c94] {\n  width: auto;\n  max-width: calc(100% - 35px);\n}\n.width--full[data-v-7e5e7c94] {\n  width: calc(100% - 35px);\n}\n.width--start[data-v-7e5e7c94] {\n  min-width: 10px;\n}\n.om-placeholder[data-v-7e5e7c94] {\n  display: inline-block;\n  height: 100%;\n  width: 100%;\n  line-height: 28px;\n  color: darkgray;\n}\n.om-list-container[data-v-7e5e7c94] {\n  position: relative;\n}\n.om-list[data-v-7e5e7c94] {\n  position: absolute;\n  width: 100%;\n  border-left: 1px solid lightgray;\n  border-right: 1px solid lightgray;\n  border-bottom: 1px solid lightgray;\n  padding: 4px 8px;\n  background-color: white;\n  z-index: 1001;\n}\n.om-highlight[data-v-7e5e7c94] {\n  background-color: lightgrey;\n}\n.om-list-item[data-v-7e5e7c94] {\n  font-weight: 500;\n  cursor: pointer;\n}\n.om-list-item[data-v-7e5e7c94]:hover {\n  background-color: lightgray;\n}\n.om-search[data-v-7e5e7c94] {\n  vertical-align: middle;\n  background-color: transparent;\n  border: none;\n}\n.om-search-container[data-v-7e5e7c94] {\n  border: 1px solid lightgray;\n  display: flex;\n  padding: 4px 8px;\n  border-radius: 3px;\n}\n.om-has-focus[data-v-7e5e7c94] {\n  border: 2px solid navy;\n}\n",
+    map: {
+      "version": 3,
+      "sources": ["/home/mathis/Development/vue-omnibox/src/Omnibox.vue"],
+      "names": [],
+      "mappings": ";AAsLA;EACA,sBAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,qBAAA;EACA,YAAA;EACA,sBAAA;EACA,iBAAA;AACA;AAEA;EACA,YAAA;EACA,aAAA;AACA;AACA;EACA,YAAA;EACA,WAAA;EACA,eAAA;EACA,gBAAA;EACA,gBAAA;EACA,iBAAA;EACA,gBAAA;AACA;AACA;EACA,gBAAA;EACA,gBAAA;AACA;AACA;EACA,YAAA;AAEA;AACA;EACA,cAAA;EACA,kBAAA;AACA;AAEA;EACA,WAAA;EACA,4BAAA;AACA;AAEA;EACA,wBAAA;AACA;AAEA;EACA,eAAA;AACA;AAEA;EACA,qBAAA;EACA,YAAA;EACA,WAAA;EACA,iBAAA;EACA,eAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,kBAAA;EACA,WAAA;EACA,gCAAA;EACA,iCAAA;EACA,kCAAA;EACA,gBAAA;EACA,uBAAA;EACA,aAAA;AACA;AACA;EACA,2BAAA;AACA;AACA;EACA,gBAAA;EACA,eAAA;AACA;AAEA;EACA,2BAAA;AACA;AAEA;EACA,sBAAA;EACA,6BAAA;EACA,YAAA;AACA;AAEA;EACA,2BAAA;EACA,aAAA;EACA,gBAAA;EACA,kBAAA;AACA;AAEA;EACA,sBAAA;AACA",
+      "file": "Omnibox.vue",
+      "sourcesContent": ["<template>\n  <div class=\"om-root\">\n    <div\n      class=\"om-search-container\"\n      :class=\"{ 'om-has-focus': isInputFocused }\">\n      <button type=\"button\" class=\"om-search\" @click.prevent=\"triggerSearch\">\n        <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z\"></path></svg>\n      </button>\n      <div\n        ref=\"input\"\n        class=\"om-input single-line\"\n        :class=\"{\n          'width--auto': isInputFocused,\n          'width--start': isInputFocused && currentSearch.length === 0,\n          'width--full': !isInputFocused && currentSearch.length > 0 }\"\n        contenteditable=\"true\"\n        @input.stop=\"updateValue\"\n        @keydown.stop=\"runSpecialKeys\"\n        @focusin=\"isInputFocused = true\"\n        @focusout=\"isInputFocused = false\">\n      </div>\n      <span\n        v-if=\"currentSearch.length === 0 && !isInputFocused\"\n        @click.stop.prevent=\"focusInput\"\n        class=\"om-placeholder\">{{ placeholder }}</span>\n      <span\n        v-show=\"isInputFocused\"\n        class=\"om-completion\"\n        @click.stop.prevent=\"focusInput\">{{ completion }}</span>\n    </div>\n    <div class=\"om-list-container\">\n      <div class=\"om-list\" v-if=\"currentSearch.length >= minChars && showList && isOpenList && filteredOptions.length > 0 && isInputFocused\">\n        <div\n          v-for=\"(option, idx) in filteredOptions\"\n          class=\"om-list-item\"\n          :class=\"{ 'om-highlight': idx === listPosition }\"\n          :key=\"option[label]\"\n          @mousedown.stop.prevent=\"selectCurrentOption(option)\">\n          <slot name=\"option\" v-bind:option=\"option\">\n            {{ option[label] }}\n          </slot>\n        </div>\n    </div>\n    </div>\n  </div>\n</template>\n<script>\nexport default {\n  props: {\n    closeOnSelect: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    disableSearch: {\n      type: Boolean,\n      required: false,\n      default: () => false\n    },\n    label: {\n      type: String,\n      required: false,\n      default: () => 'label'\n    },\n    minChars: {\n      type: Number,\n      required: false,\n      default: () => 3\n    },\n    options: {\n      type: Array,\n      required: false,\n      default: () => ([])\n    },\n    placeholder: {\n      type: String,\n      required: false,\n      default: () => 'Search...'\n    },\n    showList: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    tabCompletion: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    }\n  },\n  data () {\n    return {\n      currentSearch: '',\n      listPosition: -1,\n      isOpenList: true,\n      isInputFocused: false\n    }\n  },\n  computed: {\n    completion () {\n      const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')\n      return this.options.reduce((acc, val) => {\n        const isMatching = val[this.label].match(reg)\n        if (this.currentSearch === '') return ''\n        if (acc == '' && isMatching) return isMatching[2]\n        if (isMatching && val.length < acc.length) return isMatching[2]\n        return acc\n      }, '')\n    },\n    filteredOptions () {\n      const reg = new RegExp(`^${this.currentSearch}`, 'i')\n      const filtered = this.options.filter(o => o[this.label].match(reg))\n      return this.disableSearch ? this.options : filtered\n    }\n  },\n  methods: {\n    focusInput () {\n      const el = this.$refs.input\n      if (this.currentSearch !== '') {\n        let range = document.createRange()\n        let sel = window.getSelection()\n        let node = el.childNodes[0]\n        range.setStart(node, node.textContent.length)\n        range.collapse(true)\n        sel.removeAllRanges()\n        sel.addRange(range)\n      }\n      el.focus()\n    },\n    getTextContent (el = this.$refs.input) {\n      return el.textContent\n    },\n    runSpecialKeys (e) {\n      if (e.code === 'Tab' && this.tabCompletion) {\n        e.preventDefault()\n        this.currentSearch += this.completion\n        this.setTextContent(this.currentSearch)\n        this.focusInput()\n      } else if (e.code === 'ArrowDown') {\n        e.preventDefault()\n        if (this.listPosition < this.filteredOptions.length - 1) {\n          this.listPosition += 1\n        }\n      } else if (e.code === \"ArrowUp\") {\n          e.preventDefault()\n          if (this.listPosition > -1) {\n            this.listPosition -= 1\n          }\n      } else if (e.code === 'Enter') {\n        e.preventDefault()\n        if (this.listPosition > -1) {\n          this.selectCurrentOption()\n        } else {\n          this.triggerSearch()\n        }\n      }\n    },\n    selectCurrentOption (option = this.filteredOptions[this.listPosition]) {\n      this.currentSearch = option[this.label]\n      this.setTextContent(this.currentSearch)\n      this.listPosition = -1\n      this.$emit('selected', option)\n      this.isOpenList = !this.closeOnSelect\n      this.focusInput()\n    },\n    setTextContent (value, el = this.$refs.input) {\n      el.textContent = value\n    },\n    triggerSearch () {\n      this.$emit('searched', this.currentSearch)\n      this.isOpenList = !this.closeOnSelect\n    },\n    updateValue (e) {\n      const el = e.target\n      const content = this.getTextContent(el)\n      this.currentSearch = content\n      this.isOpenList = true\n    }\n  }\n}\n</script>\n<style scoped>\n  * {\n    box-sizing: border-box;\n  }\n  .om-root {\n    position: relative;\n  }\n  .om-input {\n    display: inline-block;\n    height: 28px;\n    vertical-align: middle;\n    line-height: 28px;\n  }\n\n  .om-input:focus {\n    border: none;\n    outline: none;\n  }\n  .om-completion {\n    height: 100%;\n    width: auto;\n    max-width: 100%;\n    color: lightgray;\n    overflow: hidden;\n    line-height: 28px;\n    white-space: pre;\n  }\n  [contenteditable=\"true\"].single-line {\n    white-space: pre;\n    overflow: hidden;\n  } \n  [contenteditable=\"true\"].single-line br {\n    display:none;\n\n  }\n  [contenteditable=\"true\"].single-line * {\n    display:inline;\n    white-space:nowrap;\n  }\n\n  .width--auto {\n    width: auto;\n    max-width: calc(100% - 35px);\n  }\n\n  .width--full {\n    width: calc(100% - 35px);\n  }\n\n  .width--start {\n    min-width: 10px;\n  }\n\n  .om-placeholder {\n    display: inline-block;\n    height: 100%;\n    width: 100%;\n    line-height: 28px;\n    color: darkgray;\n  }\n  .om-list-container {\n    position: relative;\n  }\n  .om-list {\n    position: absolute;\n    width: 100%;\n    border-left: 1px solid lightgray;\n    border-right: 1px solid lightgray;\n    border-bottom: 1px solid lightgray;\n    padding: 4px 8px;\n    background-color: white;\n    z-index: 1001;\n  }\n  .om-highlight {\n    background-color: lightgrey;\n  }\n  .om-list-item {\n    font-weight: 500;\n    cursor: pointer;\n  }\n\n  .om-list-item:hover {\n    background-color: lightgray;\n  }\n\n  .om-search {\n    vertical-align: middle;\n    background-color: transparent;\n    border: none;\n  }\n\n  .om-search-container {\n    border: 1px solid lightgray;\n    display: flex;\n    padding: 4px 8px;\n    border-radius: 3px;\n  }\n\n  .om-has-focus {\n    border: 2px solid navy;\n  }\n</style>\n"]
+    },
+    media: undefined
+  });
+};
+/* scoped */
 
-  };
-  /* scoped */
-  const __vue_scope_id__ = "data-v-7e5e7c94";
-  /* module identifier */
-  const __vue_module_identifier__ = undefined;
-  /* functional template */
-  const __vue_is_functional_template__ = false;
-  /* style inject SSR */
-  
-  /* style inject shadow dom */
-  
 
-  
-  const __vue_component__ = /*#__PURE__*/normalizeComponent(
-    { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
-    __vue_inject_styles__,
-    __vue_script__,
-    __vue_scope_id__,
-    __vue_is_functional_template__,
-    __vue_module_identifier__,
-    false,
-    createInjector,
-    undefined,
-    undefined
-  );
+var __vue_scope_id__ = "data-v-7e5e7c94";
+/* module identifier */
+
+var __vue_module_identifier__ = undefined;
+/* functional template */
+
+var __vue_is_functional_template__ = false;
+/* style inject SSR */
+
+/* style inject shadow dom */
+
+var __vue_component__ = /*#__PURE__*/normalizeComponent({
+  render: __vue_render__,
+  staticRenderFns: __vue_staticRenderFns__
+}, __vue_inject_styles__, __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, false, createInjector, undefined, undefined);
 
 function install(Vue) {
-  if (install.installed) return;
+  if (install.installed) { return; }
   install.installed = true;
   Vue.component('Omnibox', component);
 } // Create module definition for Vue.use()

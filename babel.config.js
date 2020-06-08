@@ -7,7 +7,8 @@ module.exports = function (api) {
       {
         useBuiltIns: 'usage',
         corejs: 3,
-        modules: false
+        modules: false,
+        forceAllTransforms: true
       }
     ]
   ]
