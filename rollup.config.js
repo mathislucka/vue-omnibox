@@ -1,6 +1,7 @@
+import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import vue from 'rollup-plugin-vue'
-import buble from '@rollup/plugin-buble'
+import babel from '@rollup/plugin-babel'
 import { terser } from 'rollup-plugin-terser'
 
 export default {
@@ -21,11 +22,15 @@ export default {
     }
   ],
   plugins: [
+    resolve(),
     commonjs(),
     vue({
       css: true,
       compileTemplate: true
     }),
-    buble()
+    babel({
+      exclude: 'node_modules/**',
+      babelHelpers: 'runtime'
+    })
   ]
 }
