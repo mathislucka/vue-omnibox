@@ -14,7 +14,6 @@
           'width--start': isInputFocused && currentSearch.length === 0,
           'width--full': !isInputFocused && currentSearch.length > 0 }"
         contenteditable="true"
-        @input.stop="updateValue"
         @keydown.stop="runSpecialKeys"
         @focusin="isInputFocused = true"
         @focusout="isInputFocused = false">
@@ -86,11 +85,16 @@ export default {
       type: Boolean,
       required: false,
       default: () => true
+    },
+    value: {
+      type: 'String',
+      required: false,
+      default: () => ''
     }
   },
   data () {
     return {
-      currentSearch: '',
+      currentSearch: this.value,
       listPosition: -1,
       isOpenList: true,
       isInputFocused: false
@@ -113,6 +117,12 @@ export default {
       return this.disableSearch ? this.options : filtered
     }
   },
+  watch: {
+    value () {
+      this.currentSearch = this.value
+      this.setTextContent(this.value)
+    }
+  },
   methods: {
     focusInput () {
       const el = this.$refs.input
@@ -131,22 +141,23 @@ export default {
       return el.textContent
     },
     runSpecialKeys (e) {
-      if (e.code === 'Tab' && this.tabCompletion) {
+      const key = e.key
+      if (key === 'Tab' && this.tabCompletion) {
         e.preventDefault()
         this.currentSearch += this.completion
         this.setTextContent(this.currentSearch)
         this.focusInput()
-      } else if (e.code === 'ArrowDown') {
+      } else if (key === 'ArrowDown' || key === 'Down') {
         e.preventDefault()
         if (this.listPosition < this.filteredOptions.length - 1) {
           this.listPosition += 1
         }
-      } else if (e.code === "ArrowUp") {
+      } else if (key === "ArrowUp" || key === 'Up') {
           e.preventDefault()
           if (this.listPosition > -1) {
             this.listPosition -= 1
           }
-      } else if (e.code === 'Enter') {
+      } else if (key === 'Enter') {
         e.preventDefault()
         if (this.listPosition > -1) {
           this.selectCurrentOption()
@@ -171,11 +182,20 @@ export default {
       this.isOpenList = !this.closeOnSelect
     },
     updateValue (e) {
-      const el = e.target
-      const content = this.getTextContent(el)
+      const content = this.getTextContent()
       this.currentSearch = content
       this.isOpenList = true
+      this.$emit('input', this.currentSearch)
     }
+  },
+  mounted () {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        this.updateValue()
+      });  
+    });
+
+    observer.observe(this.$refs.input, { childList: true, characterData: true, subtree: true })
   }
 }
 </script>

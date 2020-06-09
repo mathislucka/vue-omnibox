@@ -746,6 +746,33 @@ _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO
   }
 });
 
+var arrayMethodIsStrict = function (METHOD_NAME, argument) {
+  var method = [][METHOD_NAME];
+  return !!method && fails(function () {
+    // eslint-disable-next-line no-useless-call,no-throw-literal
+    method.call(null, argument || function () { throw 1; }, 1);
+  });
+};
+
+var $forEach = arrayIteration.forEach;
+
+
+
+var STRICT_METHOD = arrayMethodIsStrict('forEach');
+var USES_TO_LENGTH$1 = arrayMethodUsesToLength('forEach');
+
+// `Array.prototype.forEach` method implementation
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+var arrayForEach = (!STRICT_METHOD || !USES_TO_LENGTH$1) ? function forEach(callbackfn /* , thisArg */) {
+  return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+} : [].forEach;
+
+// `Array.prototype.forEach` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+_export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
+  forEach: arrayForEach
+});
+
 // `Array.prototype.{ reduce, reduceRight }` methods implementation
 var createMethod$2 = function (IS_RIGHT) {
   return function (that, callbackfn, argumentsLength, memo) {
@@ -782,24 +809,16 @@ var arrayReduce = {
   right: createMethod$2(true)
 };
 
-var arrayMethodIsStrict = function (METHOD_NAME, argument) {
-  var method = [][METHOD_NAME];
-  return !!method && fails(function () {
-    // eslint-disable-next-line no-useless-call,no-throw-literal
-    method.call(null, argument || function () { throw 1; }, 1);
-  });
-};
-
 var $reduce = arrayReduce.left;
 
 
 
-var STRICT_METHOD = arrayMethodIsStrict('reduce');
-var USES_TO_LENGTH$1 = arrayMethodUsesToLength('reduce', { 1: 0 });
+var STRICT_METHOD$1 = arrayMethodIsStrict('reduce');
+var USES_TO_LENGTH$2 = arrayMethodUsesToLength('reduce', { 1: 0 });
 
 // `Array.prototype.reduce` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-_export({ target: 'Array', proto: true, forced: !STRICT_METHOD || !USES_TO_LENGTH$1 }, {
+_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$1 || !USES_TO_LENGTH$2 }, {
   reduce: function reduce(callbackfn /* , initialValue */) {
     return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -1504,7 +1523,53 @@ fixRegexpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCal
   ];
 });
 
-//
+// iterable DOM collections
+// flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
+var domIterables = {
+  CSSRuleList: 0,
+  CSSStyleDeclaration: 0,
+  CSSValueList: 0,
+  ClientRectList: 0,
+  DOMRectList: 0,
+  DOMStringList: 0,
+  DOMTokenList: 1,
+  DataTransferItemList: 0,
+  FileList: 0,
+  HTMLAllCollection: 0,
+  HTMLCollection: 0,
+  HTMLFormElement: 0,
+  HTMLSelectElement: 0,
+  MediaList: 0,
+  MimeTypeArray: 0,
+  NamedNodeMap: 0,
+  NodeList: 1,
+  PaintRequestList: 0,
+  Plugin: 0,
+  PluginArray: 0,
+  SVGLengthList: 0,
+  SVGNumberList: 0,
+  SVGPathSegList: 0,
+  SVGPointList: 0,
+  SVGStringList: 0,
+  SVGTransformList: 0,
+  SourceBufferList: 0,
+  StyleSheetList: 0,
+  TextTrackCueList: 0,
+  TextTrackList: 0,
+  TouchList: 0
+};
+
+for (var COLLECTION_NAME in domIterables) {
+  var Collection = global_1[COLLECTION_NAME];
+  var CollectionPrototype = Collection && Collection.prototype;
+  // some Chrome versions have non-configurable methods on DOMTokenList
+  if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach) { try {
+    createNonEnumerableProperty(CollectionPrototype, 'forEach', arrayForEach);
+  } catch (error) {
+    CollectionPrototype.forEach = arrayForEach;
+  } }
+}
+
 //
 //
 //
@@ -1607,11 +1672,18 @@ var script = {
       "default": function _default() {
         return true;
       }
+    },
+    value: {
+      type: 'String',
+      required: false,
+      "default": function _default() {
+        return '';
+      }
     }
   },
   data: function data() {
     return {
-      currentSearch: '',
+      currentSearch: this.value,
       listPosition: -1,
       isOpenList: true,
       isInputFocused: false
@@ -1641,6 +1713,12 @@ var script = {
       return this.disableSearch ? this.options : filtered;
     }
   },
+  watch: {
+    value: function value() {
+      this.currentSearch = this.value;
+      this.setTextContent(this.value);
+    }
+  },
   methods: {
     focusInput: function focusInput() {
       var el = this.$refs.input;
@@ -1662,24 +1740,26 @@ var script = {
       return el.textContent;
     },
     runSpecialKeys: function runSpecialKeys(e) {
-      if (e.code === 'Tab' && this.tabCompletion) {
+      var key = e.key;
+
+      if (key === 'Tab' && this.tabCompletion) {
         e.preventDefault();
         this.currentSearch += this.completion;
         this.setTextContent(this.currentSearch);
         this.focusInput();
-      } else if (e.code === 'ArrowDown') {
+      } else if (key === 'ArrowDown' || key === 'Down') {
         e.preventDefault();
 
         if (this.listPosition < this.filteredOptions.length - 1) {
           this.listPosition += 1;
         }
-      } else if (e.code === "ArrowUp") {
+      } else if (key === "ArrowUp" || key === 'Up') {
         e.preventDefault();
 
         if (this.listPosition > -1) {
           this.listPosition -= 1;
         }
-      } else if (e.code === 'Enter') {
+      } else if (key === 'Enter') {
         e.preventDefault();
 
         if (this.listPosition > -1) {
@@ -1707,11 +1787,25 @@ var script = {
       this.isOpenList = !this.closeOnSelect;
     },
     updateValue: function updateValue(e) {
-      var el = e.target;
-      var content = this.getTextContent(el);
+      var content = this.getTextContent();
       this.currentSearch = content;
       this.isOpenList = true;
+      this.$emit('input', this.currentSearch);
     }
+  },
+  mounted: function mounted() {
+    var _this3 = this;
+
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        _this3.updateValue();
+      });
+    });
+    observer.observe(this.$refs.input, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
   }
 };
 
@@ -1896,10 +1990,6 @@ var __vue_render__ = function __vue_render__() {
       contenteditable: "true"
     },
     on: {
-      input: function input($event) {
-        $event.stopPropagation();
-        return _vm.updateValue($event);
-      },
       keydown: function keydown($event) {
         $event.stopPropagation();
         return _vm.runSpecialKeys($event);
@@ -1965,15 +2055,15 @@ __vue_render__._withStripped = true;
 
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) { return; }
-  inject("data-v-7e5e7c94_0", {
-    source: "\n*[data-v-7e5e7c94] {\n  box-sizing: border-box;\n}\n.om-root[data-v-7e5e7c94] {\n  position: relative;\n}\n.om-input[data-v-7e5e7c94] {\n  display: inline-block;\n  height: 28px;\n  vertical-align: middle;\n  line-height: 28px;\n}\n.om-input[data-v-7e5e7c94]:focus {\n  border: none;\n  outline: none;\n}\n.om-completion[data-v-7e5e7c94] {\n  height: 100%;\n  width: auto;\n  max-width: 100%;\n  color: lightgray;\n  overflow: hidden;\n  line-height: 28px;\n  white-space: pre;\n}\n[contenteditable=\"true\"].single-line[data-v-7e5e7c94] {\n  white-space: pre;\n  overflow: hidden;\n}\n[contenteditable=\"true\"].single-line br[data-v-7e5e7c94] {\n  display:none;\n}\n[contenteditable=\"true\"].single-line *[data-v-7e5e7c94] {\n  display:inline;\n  white-space:nowrap;\n}\n.width--auto[data-v-7e5e7c94] {\n  width: auto;\n  max-width: calc(100% - 35px);\n}\n.width--full[data-v-7e5e7c94] {\n  width: calc(100% - 35px);\n}\n.width--start[data-v-7e5e7c94] {\n  min-width: 10px;\n}\n.om-placeholder[data-v-7e5e7c94] {\n  display: inline-block;\n  height: 100%;\n  width: 100%;\n  line-height: 28px;\n  color: darkgray;\n}\n.om-list-container[data-v-7e5e7c94] {\n  position: relative;\n}\n.om-list[data-v-7e5e7c94] {\n  position: absolute;\n  width: 100%;\n  border-left: 1px solid lightgray;\n  border-right: 1px solid lightgray;\n  border-bottom: 1px solid lightgray;\n  padding: 4px 8px;\n  background-color: white;\n  z-index: 1001;\n}\n.om-highlight[data-v-7e5e7c94] {\n  background-color: lightgrey;\n}\n.om-list-item[data-v-7e5e7c94] {\n  font-weight: 500;\n  cursor: pointer;\n}\n.om-list-item[data-v-7e5e7c94]:hover {\n  background-color: lightgray;\n}\n.om-search[data-v-7e5e7c94] {\n  vertical-align: middle;\n  background-color: transparent;\n  border: none;\n}\n.om-search-container[data-v-7e5e7c94] {\n  border: 1px solid lightgray;\n  display: flex;\n  padding: 4px 8px;\n  border-radius: 3px;\n}\n.om-has-focus[data-v-7e5e7c94] {\n  border: 2px solid navy;\n}\n",
+  inject("data-v-58b527e4_0", {
+    source: "\n*[data-v-58b527e4] {\n  box-sizing: border-box;\n}\n.om-root[data-v-58b527e4] {\n  position: relative;\n}\n.om-input[data-v-58b527e4] {\n  display: inline-block;\n  height: 28px;\n  vertical-align: middle;\n  line-height: 28px;\n}\n.om-input[data-v-58b527e4]:focus {\n  border: none;\n  outline: none;\n}\n.om-completion[data-v-58b527e4] {\n  height: 100%;\n  width: auto;\n  max-width: 100%;\n  color: lightgray;\n  overflow: hidden;\n  line-height: 28px;\n  white-space: pre;\n}\n[contenteditable=\"true\"].single-line[data-v-58b527e4] {\n  white-space: pre;\n  overflow: hidden;\n}\n[contenteditable=\"true\"].single-line br[data-v-58b527e4] {\n  display:none;\n}\n[contenteditable=\"true\"].single-line *[data-v-58b527e4] {\n  display:inline;\n  white-space:nowrap;\n}\n.width--auto[data-v-58b527e4] {\n  width: auto;\n  max-width: calc(100% - 35px);\n}\n.width--full[data-v-58b527e4] {\n  width: calc(100% - 35px);\n}\n.width--start[data-v-58b527e4] {\n  min-width: 10px;\n}\n.om-placeholder[data-v-58b527e4] {\n  display: inline-block;\n  height: 100%;\n  width: 100%;\n  line-height: 28px;\n  color: darkgray;\n}\n.om-list-container[data-v-58b527e4] {\n  position: relative;\n}\n.om-list[data-v-58b527e4] {\n  position: absolute;\n  width: 100%;\n  border-left: 1px solid lightgray;\n  border-right: 1px solid lightgray;\n  border-bottom: 1px solid lightgray;\n  padding: 4px 8px;\n  background-color: white;\n  z-index: 1001;\n}\n.om-highlight[data-v-58b527e4] {\n  background-color: lightgrey;\n}\n.om-list-item[data-v-58b527e4] {\n  font-weight: 500;\n  cursor: pointer;\n}\n.om-list-item[data-v-58b527e4]:hover {\n  background-color: lightgray;\n}\n.om-search[data-v-58b527e4] {\n  vertical-align: middle;\n  background-color: transparent;\n  border: none;\n}\n.om-search-container[data-v-58b527e4] {\n  border: 1px solid lightgray;\n  display: flex;\n  padding: 4px 8px;\n  border-radius: 3px;\n}\n.om-has-focus[data-v-58b527e4] {\n  border: 2px solid navy;\n}\n",
     map: {
       "version": 3,
       "sources": ["/home/mathis/Development/vue-omnibox/src/Omnibox.vue"],
       "names": [],
-      "mappings": ";AAsLA;EACA,sBAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,qBAAA;EACA,YAAA;EACA,sBAAA;EACA,iBAAA;AACA;AAEA;EACA,YAAA;EACA,aAAA;AACA;AACA;EACA,YAAA;EACA,WAAA;EACA,eAAA;EACA,gBAAA;EACA,gBAAA;EACA,iBAAA;EACA,gBAAA;AACA;AACA;EACA,gBAAA;EACA,gBAAA;AACA;AACA;EACA,YAAA;AAEA;AACA;EACA,cAAA;EACA,kBAAA;AACA;AAEA;EACA,WAAA;EACA,4BAAA;AACA;AAEA;EACA,wBAAA;AACA;AAEA;EACA,eAAA;AACA;AAEA;EACA,qBAAA;EACA,YAAA;EACA,WAAA;EACA,iBAAA;EACA,eAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,kBAAA;EACA,WAAA;EACA,gCAAA;EACA,iCAAA;EACA,kCAAA;EACA,gBAAA;EACA,uBAAA;EACA,aAAA;AACA;AACA;EACA,2BAAA;AACA;AACA;EACA,gBAAA;EACA,eAAA;AACA;AAEA;EACA,2BAAA;AACA;AAEA;EACA,sBAAA;EACA,6BAAA;EACA,YAAA;AACA;AAEA;EACA,2BAAA;EACA,aAAA;EACA,gBAAA;EACA,kBAAA;AACA;AAEA;EACA,sBAAA;AACA",
+      "mappings": ";AA0MA;EACA,sBAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,qBAAA;EACA,YAAA;EACA,sBAAA;EACA,iBAAA;AACA;AAEA;EACA,YAAA;EACA,aAAA;AACA;AACA;EACA,YAAA;EACA,WAAA;EACA,eAAA;EACA,gBAAA;EACA,gBAAA;EACA,iBAAA;EACA,gBAAA;AACA;AACA;EACA,gBAAA;EACA,gBAAA;AACA;AACA;EACA,YAAA;AAEA;AACA;EACA,cAAA;EACA,kBAAA;AACA;AAEA;EACA,WAAA;EACA,4BAAA;AACA;AAEA;EACA,wBAAA;AACA;AAEA;EACA,eAAA;AACA;AAEA;EACA,qBAAA;EACA,YAAA;EACA,WAAA;EACA,iBAAA;EACA,eAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,kBAAA;EACA,WAAA;EACA,gCAAA;EACA,iCAAA;EACA,kCAAA;EACA,gBAAA;EACA,uBAAA;EACA,aAAA;AACA;AACA;EACA,2BAAA;AACA;AACA;EACA,gBAAA;EACA,eAAA;AACA;AAEA;EACA,2BAAA;AACA;AAEA;EACA,sBAAA;EACA,6BAAA;EACA,YAAA;AACA;AAEA;EACA,2BAAA;EACA,aAAA;EACA,gBAAA;EACA,kBAAA;AACA;AAEA;EACA,sBAAA;AACA",
       "file": "Omnibox.vue",
-      "sourcesContent": ["<template>\n  <div class=\"om-root\">\n    <div\n      class=\"om-search-container\"\n      :class=\"{ 'om-has-focus': isInputFocused }\">\n      <button type=\"button\" class=\"om-search\" @click.prevent=\"triggerSearch\">\n        <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z\"></path></svg>\n      </button>\n      <div\n        ref=\"input\"\n        class=\"om-input single-line\"\n        :class=\"{\n          'width--auto': isInputFocused,\n          'width--start': isInputFocused && currentSearch.length === 0,\n          'width--full': !isInputFocused && currentSearch.length > 0 }\"\n        contenteditable=\"true\"\n        @input.stop=\"updateValue\"\n        @keydown.stop=\"runSpecialKeys\"\n        @focusin=\"isInputFocused = true\"\n        @focusout=\"isInputFocused = false\">\n      </div>\n      <span\n        v-if=\"currentSearch.length === 0 && !isInputFocused\"\n        @click.stop.prevent=\"focusInput\"\n        class=\"om-placeholder\">{{ placeholder }}</span>\n      <span\n        v-show=\"isInputFocused\"\n        class=\"om-completion\"\n        @click.stop.prevent=\"focusInput\">{{ completion }}</span>\n    </div>\n    <div class=\"om-list-container\">\n      <div class=\"om-list\" v-if=\"currentSearch.length >= minChars && showList && isOpenList && filteredOptions.length > 0 && isInputFocused\">\n        <div\n          v-for=\"(option, idx) in filteredOptions\"\n          class=\"om-list-item\"\n          :class=\"{ 'om-highlight': idx === listPosition }\"\n          :key=\"option[label]\"\n          @mousedown.stop.prevent=\"selectCurrentOption(option)\">\n          <slot name=\"option\" v-bind:option=\"option\">\n            {{ option[label] }}\n          </slot>\n        </div>\n    </div>\n    </div>\n  </div>\n</template>\n<script>\nexport default {\n  props: {\n    closeOnSelect: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    disableSearch: {\n      type: Boolean,\n      required: false,\n      default: () => false\n    },\n    label: {\n      type: String,\n      required: false,\n      default: () => 'label'\n    },\n    minChars: {\n      type: Number,\n      required: false,\n      default: () => 3\n    },\n    options: {\n      type: Array,\n      required: false,\n      default: () => ([])\n    },\n    placeholder: {\n      type: String,\n      required: false,\n      default: () => 'Search...'\n    },\n    showList: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    tabCompletion: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    }\n  },\n  data () {\n    return {\n      currentSearch: '',\n      listPosition: -1,\n      isOpenList: true,\n      isInputFocused: false\n    }\n  },\n  computed: {\n    completion () {\n      const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')\n      return this.options.reduce((acc, val) => {\n        const isMatching = val[this.label].match(reg)\n        if (this.currentSearch === '') return ''\n        if (acc == '' && isMatching) return isMatching[2]\n        if (isMatching && val.length < acc.length) return isMatching[2]\n        return acc\n      }, '')\n    },\n    filteredOptions () {\n      const reg = new RegExp(`^${this.currentSearch}`, 'i')\n      const filtered = this.options.filter(o => o[this.label].match(reg))\n      return this.disableSearch ? this.options : filtered\n    }\n  },\n  methods: {\n    focusInput () {\n      const el = this.$refs.input\n      if (this.currentSearch !== '') {\n        let range = document.createRange()\n        let sel = window.getSelection()\n        let node = el.childNodes[0]\n        range.setStart(node, node.textContent.length)\n        range.collapse(true)\n        sel.removeAllRanges()\n        sel.addRange(range)\n      }\n      el.focus()\n    },\n    getTextContent (el = this.$refs.input) {\n      return el.textContent\n    },\n    runSpecialKeys (e) {\n      if (e.code === 'Tab' && this.tabCompletion) {\n        e.preventDefault()\n        this.currentSearch += this.completion\n        this.setTextContent(this.currentSearch)\n        this.focusInput()\n      } else if (e.code === 'ArrowDown') {\n        e.preventDefault()\n        if (this.listPosition < this.filteredOptions.length - 1) {\n          this.listPosition += 1\n        }\n      } else if (e.code === \"ArrowUp\") {\n          e.preventDefault()\n          if (this.listPosition > -1) {\n            this.listPosition -= 1\n          }\n      } else if (e.code === 'Enter') {\n        e.preventDefault()\n        if (this.listPosition > -1) {\n          this.selectCurrentOption()\n        } else {\n          this.triggerSearch()\n        }\n      }\n    },\n    selectCurrentOption (option = this.filteredOptions[this.listPosition]) {\n      this.currentSearch = option[this.label]\n      this.setTextContent(this.currentSearch)\n      this.listPosition = -1\n      this.$emit('selected', option)\n      this.isOpenList = !this.closeOnSelect\n      this.focusInput()\n    },\n    setTextContent (value, el = this.$refs.input) {\n      el.textContent = value\n    },\n    triggerSearch () {\n      this.$emit('searched', this.currentSearch)\n      this.isOpenList = !this.closeOnSelect\n    },\n    updateValue (e) {\n      const el = e.target\n      const content = this.getTextContent(el)\n      this.currentSearch = content\n      this.isOpenList = true\n    }\n  }\n}\n</script>\n<style scoped>\n  * {\n    box-sizing: border-box;\n  }\n  .om-root {\n    position: relative;\n  }\n  .om-input {\n    display: inline-block;\n    height: 28px;\n    vertical-align: middle;\n    line-height: 28px;\n  }\n\n  .om-input:focus {\n    border: none;\n    outline: none;\n  }\n  .om-completion {\n    height: 100%;\n    width: auto;\n    max-width: 100%;\n    color: lightgray;\n    overflow: hidden;\n    line-height: 28px;\n    white-space: pre;\n  }\n  [contenteditable=\"true\"].single-line {\n    white-space: pre;\n    overflow: hidden;\n  } \n  [contenteditable=\"true\"].single-line br {\n    display:none;\n\n  }\n  [contenteditable=\"true\"].single-line * {\n    display:inline;\n    white-space:nowrap;\n  }\n\n  .width--auto {\n    width: auto;\n    max-width: calc(100% - 35px);\n  }\n\n  .width--full {\n    width: calc(100% - 35px);\n  }\n\n  .width--start {\n    min-width: 10px;\n  }\n\n  .om-placeholder {\n    display: inline-block;\n    height: 100%;\n    width: 100%;\n    line-height: 28px;\n    color: darkgray;\n  }\n  .om-list-container {\n    position: relative;\n  }\n  .om-list {\n    position: absolute;\n    width: 100%;\n    border-left: 1px solid lightgray;\n    border-right: 1px solid lightgray;\n    border-bottom: 1px solid lightgray;\n    padding: 4px 8px;\n    background-color: white;\n    z-index: 1001;\n  }\n  .om-highlight {\n    background-color: lightgrey;\n  }\n  .om-list-item {\n    font-weight: 500;\n    cursor: pointer;\n  }\n\n  .om-list-item:hover {\n    background-color: lightgray;\n  }\n\n  .om-search {\n    vertical-align: middle;\n    background-color: transparent;\n    border: none;\n  }\n\n  .om-search-container {\n    border: 1px solid lightgray;\n    display: flex;\n    padding: 4px 8px;\n    border-radius: 3px;\n  }\n\n  .om-has-focus {\n    border: 2px solid navy;\n  }\n</style>\n"]
+      "sourcesContent": ["<template>\n  <div class=\"om-root\">\n    <div\n      class=\"om-search-container\"\n      :class=\"{ 'om-has-focus': isInputFocused }\">\n      <button type=\"button\" class=\"om-search\" @click.prevent=\"triggerSearch\">\n        <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z\"></path></svg>\n      </button>\n      <div\n        ref=\"input\"\n        class=\"om-input single-line\"\n        :class=\"{\n          'width--auto': isInputFocused,\n          'width--start': isInputFocused && currentSearch.length === 0,\n          'width--full': !isInputFocused && currentSearch.length > 0 }\"\n        contenteditable=\"true\"\n        @keydown.stop=\"runSpecialKeys\"\n        @focusin=\"isInputFocused = true\"\n        @focusout=\"isInputFocused = false\">\n      </div>\n      <span\n        v-if=\"currentSearch.length === 0 && !isInputFocused\"\n        @click.stop.prevent=\"focusInput\"\n        class=\"om-placeholder\">{{ placeholder }}</span>\n      <span\n        v-show=\"isInputFocused\"\n        class=\"om-completion\"\n        @click.stop.prevent=\"focusInput\">{{ completion }}</span>\n    </div>\n    <div class=\"om-list-container\">\n      <div class=\"om-list\" v-if=\"currentSearch.length >= minChars && showList && isOpenList && filteredOptions.length > 0 && isInputFocused\">\n        <div\n          v-for=\"(option, idx) in filteredOptions\"\n          class=\"om-list-item\"\n          :class=\"{ 'om-highlight': idx === listPosition }\"\n          :key=\"option[label]\"\n          @mousedown.stop.prevent=\"selectCurrentOption(option)\">\n          <slot name=\"option\" v-bind:option=\"option\">\n            {{ option[label] }}\n          </slot>\n        </div>\n    </div>\n    </div>\n  </div>\n</template>\n<script>\nexport default {\n  props: {\n    closeOnSelect: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    disableSearch: {\n      type: Boolean,\n      required: false,\n      default: () => false\n    },\n    label: {\n      type: String,\n      required: false,\n      default: () => 'label'\n    },\n    minChars: {\n      type: Number,\n      required: false,\n      default: () => 3\n    },\n    options: {\n      type: Array,\n      required: false,\n      default: () => ([])\n    },\n    placeholder: {\n      type: String,\n      required: false,\n      default: () => 'Search...'\n    },\n    showList: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    tabCompletion: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    value: {\n      type: 'String',\n      required: false,\n      default: () => ''\n    }\n  },\n  data () {\n    return {\n      currentSearch: this.value,\n      listPosition: -1,\n      isOpenList: true,\n      isInputFocused: false\n    }\n  },\n  computed: {\n    completion () {\n      const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')\n      return this.options.reduce((acc, val) => {\n        const isMatching = val[this.label].match(reg)\n        if (this.currentSearch === '') return ''\n        if (acc == '' && isMatching) return isMatching[2]\n        if (isMatching && val.length < acc.length) return isMatching[2]\n        return acc\n      }, '')\n    },\n    filteredOptions () {\n      const reg = new RegExp(`^${this.currentSearch}`, 'i')\n      const filtered = this.options.filter(o => o[this.label].match(reg))\n      return this.disableSearch ? this.options : filtered\n    }\n  },\n  watch: {\n    value () {\n      this.currentSearch = this.value\n      this.setTextContent(this.value)\n    }\n  },\n  methods: {\n    focusInput () {\n      const el = this.$refs.input\n      if (this.currentSearch !== '') {\n        let range = document.createRange()\n        let sel = window.getSelection()\n        let node = el.childNodes[0]\n        range.setStart(node, node.textContent.length)\n        range.collapse(true)\n        sel.removeAllRanges()\n        sel.addRange(range)\n      }\n      el.focus()\n    },\n    getTextContent (el = this.$refs.input) {\n      return el.textContent\n    },\n    runSpecialKeys (e) {\n      const key = e.key\n      if (key === 'Tab' && this.tabCompletion) {\n        e.preventDefault()\n        this.currentSearch += this.completion\n        this.setTextContent(this.currentSearch)\n        this.focusInput()\n      } else if (key === 'ArrowDown' || key === 'Down') {\n        e.preventDefault()\n        if (this.listPosition < this.filteredOptions.length - 1) {\n          this.listPosition += 1\n        }\n      } else if (key === \"ArrowUp\" || key === 'Up') {\n          e.preventDefault()\n          if (this.listPosition > -1) {\n            this.listPosition -= 1\n          }\n      } else if (key === 'Enter') {\n        e.preventDefault()\n        if (this.listPosition > -1) {\n          this.selectCurrentOption()\n        } else {\n          this.triggerSearch()\n        }\n      }\n    },\n    selectCurrentOption (option = this.filteredOptions[this.listPosition]) {\n      this.currentSearch = option[this.label]\n      this.setTextContent(this.currentSearch)\n      this.listPosition = -1\n      this.$emit('selected', option)\n      this.isOpenList = !this.closeOnSelect\n      this.focusInput()\n    },\n    setTextContent (value, el = this.$refs.input) {\n      el.textContent = value\n    },\n    triggerSearch () {\n      this.$emit('searched', this.currentSearch)\n      this.isOpenList = !this.closeOnSelect\n    },\n    updateValue (e) {\n      const content = this.getTextContent()\n      this.currentSearch = content\n      this.isOpenList = true\n      this.$emit('input', this.currentSearch)\n    }\n  },\n  mounted () {\n    const observer = new MutationObserver((mutations) => {\n      mutations.forEach((mutation) => {\n        this.updateValue()\n      });  \n    });\n\n    observer.observe(this.$refs.input, { childList: true, characterData: true, subtree: true })\n  }\n}\n</script>\n<style scoped>\n  * {\n    box-sizing: border-box;\n  }\n  .om-root {\n    position: relative;\n  }\n  .om-input {\n    display: inline-block;\n    height: 28px;\n    vertical-align: middle;\n    line-height: 28px;\n  }\n\n  .om-input:focus {\n    border: none;\n    outline: none;\n  }\n  .om-completion {\n    height: 100%;\n    width: auto;\n    max-width: 100%;\n    color: lightgray;\n    overflow: hidden;\n    line-height: 28px;\n    white-space: pre;\n  }\n  [contenteditable=\"true\"].single-line {\n    white-space: pre;\n    overflow: hidden;\n  } \n  [contenteditable=\"true\"].single-line br {\n    display:none;\n\n  }\n  [contenteditable=\"true\"].single-line * {\n    display:inline;\n    white-space:nowrap;\n  }\n\n  .width--auto {\n    width: auto;\n    max-width: calc(100% - 35px);\n  }\n\n  .width--full {\n    width: calc(100% - 35px);\n  }\n\n  .width--start {\n    min-width: 10px;\n  }\n\n  .om-placeholder {\n    display: inline-block;\n    height: 100%;\n    width: 100%;\n    line-height: 28px;\n    color: darkgray;\n  }\n  .om-list-container {\n    position: relative;\n  }\n  .om-list {\n    position: absolute;\n    width: 100%;\n    border-left: 1px solid lightgray;\n    border-right: 1px solid lightgray;\n    border-bottom: 1px solid lightgray;\n    padding: 4px 8px;\n    background-color: white;\n    z-index: 1001;\n  }\n  .om-highlight {\n    background-color: lightgrey;\n  }\n  .om-list-item {\n    font-weight: 500;\n    cursor: pointer;\n  }\n\n  .om-list-item:hover {\n    background-color: lightgray;\n  }\n\n  .om-search {\n    vertical-align: middle;\n    background-color: transparent;\n    border: none;\n  }\n\n  .om-search-container {\n    border: 1px solid lightgray;\n    display: flex;\n    padding: 4px 8px;\n    border-radius: 3px;\n  }\n\n  .om-has-focus {\n    border: 2px solid navy;\n  }\n</style>\n"]
     },
     media: undefined
   });
@@ -1981,7 +2071,7 @@ var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
 /* scoped */
 
 
-var __vue_scope_id__ = "data-v-7e5e7c94";
+var __vue_scope_id__ = "data-v-58b527e4";
 /* module identifier */
 
 var __vue_module_identifier__ = undefined;
