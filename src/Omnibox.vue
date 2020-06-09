@@ -183,9 +183,11 @@ export default {
     },
     updateValue (e) {
       const content = this.getTextContent()
-      this.currentSearch = content
-      this.isOpenList = true
-      this.$emit('input', this.currentSearch)
+      if (content !== this.currentSearch) {
+        this.currentSearch = content
+        this.isOpenList = true
+        this.$emit('input', this.currentSearch)
+      }
     }
   },
   mounted () {
