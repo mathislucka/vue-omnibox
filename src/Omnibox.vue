@@ -87,7 +87,7 @@ export default {
       default: () => true
     },
     value: {
-      type: 'String',
+      type: String,
       required: false,
       default: () => ''
     }
