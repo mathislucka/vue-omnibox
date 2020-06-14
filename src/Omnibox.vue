@@ -7,28 +7,30 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z"></path></svg>
       </button>
       <div
+        role="textbox"
         ref="input"
         class="om-input single-line"
         :class="{
-          'width--auto': isInputFocused,
-          'width--start': isInputFocused && currentSearch.length === 0,
-          'width--full': !isInputFocused && currentSearch.length > 0 }"
+          'om-visually-hidden': isPlaceholderVisible,
+          'om-width--auto': isInputFocused,
+          'om-width--full': !isInputFocused }"
         contenteditable="true"
         @keydown.stop="runSpecialKeys"
         @focusin="isInputFocused = true"
         @focusout="isInputFocused = false">
       </div>
       <span
-        v-if="currentSearch.length === 0 && !isInputFocused"
+        v-if="isPlaceholderVisible"
         @click.stop.prevent="focusInput"
-        class="om-placeholder">{{ placeholder }}</span>
+        class="om-placeholder"
+        aria-hidden="true">{{ placeholder }}</span>
       <span
         v-show="isInputFocused"
         class="om-completion"
         @click.stop.prevent="focusInput">{{ completion }}</span>
     </div>
     <div class="om-list-container">
-      <div class="om-list" v-if="currentSearch.length >= minChars && showList && isOpenList && filteredOptions.length > 0 && isInputFocused">
+      <div class="om-list" v-if="isOptionsListVisible">
         <div
           v-for="(option, idx) in filteredOptions"
           class="om-list-item"
@@ -115,6 +117,12 @@ export default {
       const reg = new RegExp(`^${this.currentSearch}`, 'i')
       const filtered = this.options.filter(o => o[this.label].match(reg))
       return this.disableSearch ? this.options : filtered
+    },
+    isOptionsListVisible () {
+      return this.currentSearch.length >= this.minChars && this.showList && this.isOpenList && this.filteredOptions.length > 0 && this.isInputFocused
+    },
+    isPlaceholderVisible () {
+      return (!this.isInputFocused && this.currentSearch.length === 0)
     }
   },
   watch: {
@@ -142,7 +150,7 @@ export default {
     },
     runSpecialKeys (e) {
       const key = e.key
-      if (key === 'Tab' && this.tabCompletion) {
+      if (key === 'Tab' && this.tabCompletion && this.completion !== '') {
         e.preventDefault()
         this.currentSearch += this.completion
         this.setTextContent(this.currentSearch)
@@ -193,8 +201,13 @@ export default {
   mounted () {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        this.updateValue()
-      });  
+        const onlyTextAdded = Array.prototype.slice.call(mutation.addedNodes).filter(n => n.nodeType !== 3).length === 0
+        const onlyTextRemoved = Array.prototype.slice.call(mutation.removedNodes).filter(n => n.nodeType !== 3).length === 0
+        const isTextInput = mutation.type === 'characterData' || (onlyTextAdded && onlyTextRemoved)
+        if (isTextInput) {
+          this.updateValue()
+        }
+      });
     });
 
     observer.observe(this.$refs.input, { childList: true, characterData: true, subtree: true })
@@ -209,9 +222,7 @@ export default {
     position: relative;
   }
   .om-input {
-    display: inline-block;
     height: 28px;
-    vertical-align: middle;
     line-height: 28px;
   }
 
@@ -241,23 +252,22 @@ export default {
     white-space:nowrap;
   }
 
-  .width--auto {
+  .om-width--auto {
     width: auto;
-    max-width: calc(100% - 35px);
-  }
-
-  .width--full {
-    width: calc(100% - 35px);
-  }
-
-  .width--start {
+    float: left;
     min-width: 10px;
   }
 
+  .om-width--full {
+    float: left;
+    width: 100%;
+  }
+
   .om-placeholder {
-    display: inline-block;
+    display: block;
     height: 100%;
     width: 100%;
+    float: left;
     line-height: 28px;
     color: darkgray;
   }
@@ -290,6 +300,7 @@ export default {
     vertical-align: middle;
     background-color: transparent;
     border: none;
+    overflow: hidden;
   }
 
   .om-search-container {
@@ -301,5 +312,16 @@ export default {
 
   .om-has-focus {
     border: 2px solid navy;
+    padding: 3px 7px;
+  }
+
+  .om-visually-hidden:not(:focus):not(:active) { 
+    position: absolute !important;
+    height: 1px; 
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap; /* added line */
   }
 </style>
