@@ -32,6 +32,7 @@
       <div
         v-show="isInputFocused"
         class="om-completion"
+        :style="boxHeightStyle"
         @click.stop.prevent="focusInput">{{ completion }}</div>
     </div>
     <div class="om-list-container">
