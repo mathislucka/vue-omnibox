@@ -24,10 +24,10 @@
         @click.stop.prevent="focusInput"
         class="om-placeholder"
         aria-hidden="true">{{ placeholder }}</span>
-      <span
+      <div
         v-show="isInputFocused"
         class="om-completion"
-        @click.stop.prevent="focusInput">{{ completion }}</span>
+        @click.stop.prevent="focusInput">{{ completion }}</div>
     </div>
     <div class="om-list-container">
       <div class="om-list" v-if="isOptionsListVisible">
@@ -35,7 +35,7 @@
           v-for="(option, idx) in filteredOptions"
           class="om-list-item"
           :class="{ 'om-highlight': idx === listPosition }"
-          :key="option[label]"
+          :key="option[label] + idx"
           @mousedown.stop.prevent="selectCurrentOption(option)">
           <slot name="option" v-bind:option="option">
             {{ option[label] }}
@@ -222,7 +222,6 @@ export default {
     position: relative;
   }
   .om-input {
-    height: 28px;
     line-height: 28px;
   }
 
@@ -236,8 +235,9 @@ export default {
     max-width: 100%;
     color: lightgray;
     overflow: hidden;
-    line-height: 28px;
     white-space: pre;
+    display: flex;
+    align-items: center;
   }
   [contenteditable="true"].single-line {
     white-space: pre;
