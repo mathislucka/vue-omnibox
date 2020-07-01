@@ -130,7 +130,7 @@ export default {
       return `border-color: ${this.isInputFocused ? this.focusColor : this.borderColor};`
     },
     boxHeightStyle () {
-      return `line-height: ${this.boxLineHeight};`
+      return `line-height: ${this.boxLineHeight}; height: ${this.boxLineHeight};`
     },
     completion () {
       const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')
