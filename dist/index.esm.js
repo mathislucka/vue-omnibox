@@ -528,10 +528,33 @@ var _export = function (options, source) {
   } }
 };
 
-// `IsArray` abstract operation
-// https://tc39.github.io/ecma262/#sec-isarray
-var isArray = Array.isArray || function isArray(arg) {
-  return classofRaw(arg) == 'Array';
+var aFunction$1 = function (it) {
+  if (typeof it != 'function') {
+    throw TypeError(String(it) + ' is not a function');
+  } return it;
+};
+
+// optional / simple context binding
+var functionBindContext = function (fn, that, length) {
+  aFunction$1(fn);
+  if (that === undefined) { return fn; }
+  switch (length) {
+    case 0: return function () {
+      return fn.call(that);
+    };
+    case 1: return function (a) {
+      return fn.call(that, a);
+    };
+    case 2: return function (a, b) {
+      return fn.call(that, a, b);
+    };
+    case 3: return function (a, b, c) {
+      return fn.call(that, a, b, c);
+    };
+  }
+  return function (/* ...args */) {
+    return fn.apply(that, arguments);
+  };
 };
 
 // `ToObject` abstract operation
@@ -540,10 +563,10 @@ var toObject = function (argument) {
   return Object(requireObjectCoercible(argument));
 };
 
-var createProperty = function (object, key, value) {
-  var propertyKey = toPrimitive(key);
-  if (propertyKey in object) { objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value)); }
-  else { object[propertyKey] = value; }
+// `IsArray` abstract operation
+// https://tc39.github.io/ecma262/#sec-isarray
+var isArray = Array.isArray || function isArray(arg) {
+  return classofRaw(arg) == 'Array';
 };
 
 var nativeSymbol = !!Object.getOwnPropertySymbols && !fails(function () {
@@ -584,121 +607,6 @@ var arraySpeciesCreate = function (originalArray, length) {
       if (C === null) { C = undefined; }
     }
   } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
-};
-
-var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
-
-var process = global_1.process;
-var versions = process && process.versions;
-var v8 = versions && versions.v8;
-var match, version;
-
-if (v8) {
-  match = v8.split('.');
-  version = match[0] + match[1];
-} else if (engineUserAgent) {
-  match = engineUserAgent.match(/Edge\/(\d+)/);
-  if (!match || match[1] >= 74) {
-    match = engineUserAgent.match(/Chrome\/(\d+)/);
-    if (match) { version = match[1]; }
-  }
-}
-
-var engineV8Version = version && +version;
-
-var SPECIES$1 = wellKnownSymbol('species');
-
-var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
-  // We can't use this feature detection in V8 since it causes
-  // deoptimization and serious performance degradation
-  // https://github.com/zloirock/core-js/issues/677
-  return engineV8Version >= 51 || !fails(function () {
-    var array = [];
-    var constructor = array.constructor = {};
-    constructor[SPECIES$1] = function () {
-      return { foo: 1 };
-    };
-    return array[METHOD_NAME](Boolean).foo !== 1;
-  });
-};
-
-var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
-var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
-var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
-
-// We can't use this feature detection in V8 since it causes
-// deoptimization and serious performance degradation
-// https://github.com/zloirock/core-js/issues/679
-var IS_CONCAT_SPREADABLE_SUPPORT = engineV8Version >= 51 || !fails(function () {
-  var array = [];
-  array[IS_CONCAT_SPREADABLE] = false;
-  return array.concat()[0] !== array;
-});
-
-var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
-
-var isConcatSpreadable = function (O) {
-  if (!isObject(O)) { return false; }
-  var spreadable = O[IS_CONCAT_SPREADABLE];
-  return spreadable !== undefined ? !!spreadable : isArray(O);
-};
-
-var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
-
-// `Array.prototype.concat` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.concat
-// with adding support of @@isConcatSpreadable and @@species
-_export({ target: 'Array', proto: true, forced: FORCED }, {
-  concat: function concat(arg) {
-    var arguments$1 = arguments;
- // eslint-disable-line no-unused-vars
-    var O = toObject(this);
-    var A = arraySpeciesCreate(O, 0);
-    var n = 0;
-    var i, k, length, len, E;
-    for (i = -1, length = arguments.length; i < length; i++) {
-      E = i === -1 ? O : arguments$1[i];
-      if (isConcatSpreadable(E)) {
-        len = toLength(E.length);
-        if (n + len > MAX_SAFE_INTEGER) { throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED); }
-        for (k = 0; k < len; k++, n++) { if (k in E) { createProperty(A, n, E[k]); } }
-      } else {
-        if (n >= MAX_SAFE_INTEGER) { throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED); }
-        createProperty(A, n++, E);
-      }
-    }
-    A.length = n;
-    return A;
-  }
-});
-
-var aFunction$1 = function (it) {
-  if (typeof it != 'function') {
-    throw TypeError(String(it) + ' is not a function');
-  } return it;
-};
-
-// optional / simple context binding
-var functionBindContext = function (fn, that, length) {
-  aFunction$1(fn);
-  if (that === undefined) { return fn; }
-  switch (length) {
-    case 0: return function () {
-      return fn.call(that);
-    };
-    case 1: return function (a) {
-      return fn.call(that, a);
-    };
-    case 2: return function (a, b) {
-      return fn.call(that, a, b);
-    };
-    case 3: return function (a, b, c) {
-      return fn.call(that, a, b, c);
-    };
-  }
-  return function (/* ...args */) {
-    return fn.apply(that, arguments);
-  };
 };
 
 var push = [].push;
@@ -759,6 +667,42 @@ var arrayIteration = {
   // `Array.prototype.findIndex` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
   findIndex: createMethod$1(6)
+};
+
+var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
+
+var process = global_1.process;
+var versions = process && process.versions;
+var v8 = versions && versions.v8;
+var match, version;
+
+if (v8) {
+  match = v8.split('.');
+  version = match[0] + match[1];
+} else if (engineUserAgent) {
+  match = engineUserAgent.match(/Edge\/(\d+)/);
+  if (!match || match[1] >= 74) {
+    match = engineUserAgent.match(/Chrome\/(\d+)/);
+    if (match) { version = match[1]; }
+  }
+}
+
+var engineV8Version = version && +version;
+
+var SPECIES$1 = wellKnownSymbol('species');
+
+var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return engineV8Version >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES$1] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
 };
 
 var defineProperty = Object.defineProperty;
@@ -879,6 +823,12 @@ _export({ target: 'Array', proto: true, forced: !STRICT_METHOD$1 || !USES_TO_LEN
     return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
   }
 });
+
+var createProperty = function (object, key, value) {
+  var propertyKey = toPrimitive(key);
+  if (propertyKey in object) { objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value)); }
+  else { object[propertyKey] = value; }
+};
 
 var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('slice');
 var USES_TO_LENGTH$3 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
@@ -1234,7 +1184,7 @@ var CORRECT_NEW = new NativeRegExp(re1) !== re1;
 
 var UNSUPPORTED_Y$1 = regexpStickyHelpers.UNSUPPORTED_Y;
 
-var FORCED$1 = descriptors && isForced_1('RegExp', (!CORRECT_NEW || UNSUPPORTED_Y$1 || fails(function () {
+var FORCED = descriptors && isForced_1('RegExp', (!CORRECT_NEW || UNSUPPORTED_Y$1 || fails(function () {
   re2[MATCH$1] = false;
   // RegExp constructor can alter flags and IsRegExp works correct with @@match
   return NativeRegExp(re1) != re1 || NativeRegExp(re2) == re2 || NativeRegExp(re1, 'i') != '/a/i';
@@ -1242,7 +1192,7 @@ var FORCED$1 = descriptors && isForced_1('RegExp', (!CORRECT_NEW || UNSUPPORTED_
 
 // `RegExp` constructor
 // https://tc39.github.io/ecma262/#sec-regexp-constructor
-if (FORCED$1) {
+if (FORCED) {
   var RegExpWrapper = function RegExp(pattern, flags) {
     var thisIsRegExp = this instanceof RegExpWrapper;
     var patternIsRegExp = isRegexp(pattern);
@@ -1717,9 +1667,6 @@ for (var COLLECTION_NAME in domIterables) {
 //
 //
 //
-//
-//
-//
 var script = {
   props: {
     borderColor: {
@@ -1729,7 +1676,7 @@ var script = {
         return 'lightgray';
       }
     },
-    boxLineHeight: {
+    boxHeight: {
       type: String,
       required: false,
       "default": function _default() {
@@ -1820,7 +1767,7 @@ var script = {
       return "border-color: ".concat(this.isInputFocused ? this.focusColor : this.borderColor, ";");
     },
     boxHeightStyle: function boxHeightStyle() {
-      return "line-height: ".concat(this.boxLineHeight, "; height: ").concat(this.boxLineHeight, ";");
+      return "height: ".concat(this.boxHeight, ";");
     },
     completion: function completion() {
       var _this = this;
@@ -1853,8 +1800,11 @@ var script = {
   },
   watch: {
     value: function value() {
-      this.currentSearch = this.value;
-      this.setTextContent(this.value);
+      if (this.currentSearch !== this.value) {
+        this.currentSearch = this.value;
+        this.setTextContent(this.value);
+        this.focusInput();
+      }
     }
   },
   methods: {
@@ -2100,7 +2050,8 @@ var __vue_render__ = function __vue_render__() {
   var _c = _vm._self._c || _h;
 
   return _c("div", {
-    staticClass: "om-root"
+    staticClass: "om-root",
+    style: _vm.boxHeightStyle
   }, [_c("div", {
     staticClass: "om-search-container",
     "class": {
@@ -2138,7 +2089,6 @@ var __vue_render__ = function __vue_render__() {
       "om-width--auto": _vm.isInputFocused,
       "om-width--full": !_vm.isInputFocused
     },
-    style: _vm.boxHeightStyle,
     attrs: {
       role: "textbox",
       contenteditable: "true"
@@ -2157,7 +2107,6 @@ var __vue_render__ = function __vue_render__() {
     }
   }), _vm._v(" "), _vm.isPlaceholderVisible ? _c("span", {
     staticClass: "om-placeholder",
-    style: _vm.boxHeightStyle,
     attrs: {
       "aria-hidden": "true"
     },
@@ -2176,7 +2125,6 @@ var __vue_render__ = function __vue_render__() {
       expression: "isInputFocused"
     }],
     staticClass: "om-completion",
-    style: _vm.boxHeightStyle,
     on: {
       click: function click($event) {
         $event.stopPropagation();
@@ -2215,15 +2163,15 @@ __vue_render__._withStripped = true;
 
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) { return; }
-  inject("data-v-4ec0e49d_0", {
-    source: "\n*[data-v-4ec0e49d] {\n  box-sizing: border-box;\n}\n.om-root[data-v-4ec0e49d] {\n  position: relative;\n}\n.om-input[data-v-4ec0e49d]:focus {\n  border: none;\n  outline: none;\n}\n.om-completion[data-v-4ec0e49d] {\n  height: 100%;\n  width: auto;\n  max-width: 100%;\n  color: lightgray;\n  overflow: hidden;\n  white-space: pre;\n  display: flex;\n  align-items: center;\n}\n[contenteditable=\"true\"].single-line[data-v-4ec0e49d] {\n  white-space: pre;\n  overflow: hidden;\n}\n[contenteditable=\"true\"].single-line br[data-v-4ec0e49d] {\n  display:none;\n}\n[contenteditable=\"true\"].single-line *[data-v-4ec0e49d] {\n  display:inline;\n  white-space:nowrap;\n}\n.om-width--auto[data-v-4ec0e49d] {\n  width: auto;\n  float: left;\n  min-width: 10px;\n}\n.om-width--full[data-v-4ec0e49d] {\n  float: left;\n  width: 100%;\n}\n.om-placeholder[data-v-4ec0e49d] {\n  display: block;\n  height: 100%;\n  width: 100%;\n  float: left;\n  color: darkgray;\n}\n.om-list-container[data-v-4ec0e49d] {\n  position: relative;\n}\n.om-list[data-v-4ec0e49d] {\n  position: absolute;\n  width: 100%;\n  border-left: 1px solid lightgray;\n  border-right: 1px solid lightgray;\n  border-bottom: 1px solid lightgray;\n  padding: 4px 8px;\n  background-color: white;\n  z-index: 1001;\n}\n.om-highlight[data-v-4ec0e49d] {\n  background-color: lightgrey;\n}\n.om-list-item[data-v-4ec0e49d] {\n  font-weight: 500;\n  cursor: pointer;\n}\n.om-list-item[data-v-4ec0e49d]:hover {\n  background-color: lightgray;\n}\n.om-search[data-v-4ec0e49d] {\n  vertical-align: middle;\n  background-color: transparent;\n  border: none;\n  overflow: hidden;\n}\n.om-search-container[data-v-4ec0e49d] {\n  border: 1px solid lightgray;\n  display: flex;\n  padding: 4px 8px;\n  border-radius: 3px;\n}\n.om-has-focus[data-v-4ec0e49d] {\n  border: 2px solid navy;\n  padding: 3px 7px;\n}\n.om-visually-hidden[data-v-4ec0e49d]:not(:focus):not(:active) { \n  position: absolute !important;\n  height: 1px; \n  width: 1px;\n  overflow: hidden;\n  clip: rect(1px 1px 1px 1px); /* IE6, IE7 */\n  clip: rect(1px, 1px, 1px, 1px);\n  white-space: nowrap; /* added line */\n}\n",
+  inject("data-v-2f057f64_0", {
+    source: "\n*[data-v-2f057f64] {\n  box-sizing: border-box;\n}\n.om-root[data-v-2f057f64] {\n  position: relative;\n}\n.om-input[data-v-2f057f64]:focus {\n  border: none;\n  outline: none;\n}\n.om-completion[data-v-2f057f64] {\n  height: 100%;\n  width: auto;\n  max-width: 100%;\n  color: lightgray;\n  overflow: hidden;\n  white-space: pre;\n  display: flex;\n  align-items: center;\n}\n[contenteditable=\"true\"].single-line[data-v-2f057f64] {\n  white-space: pre;\n  overflow: hidden;\n}\n[contenteditable=\"true\"].single-line br[data-v-2f057f64] {\n  display:none;\n}\n[contenteditable=\"true\"].single-line *[data-v-2f057f64] {\n  display:inline;\n  white-space:nowrap;\n}\n.om-width--auto[data-v-2f057f64] {\n  width: auto;\n  float: left;\n  min-width: 10px;\n}\n.om-width--full[data-v-2f057f64] {\n  float: left;\n  width: 100%;\n}\n.om-placeholder[data-v-2f057f64] {\n  display: block;\n  height: 100%;\n  width: 100%;\n  float: left;\n  color: darkgray;\n}\n.om-list-container[data-v-2f057f64] {\n  position: relative;\n}\n.om-list[data-v-2f057f64] {\n  position: absolute;\n  width: 100%;\n  border-left: 1px solid lightgray;\n  border-right: 1px solid lightgray;\n  border-bottom: 1px solid lightgray;\n  padding: 4px 8px;\n  background-color: white;\n  z-index: 1001;\n}\n.om-highlight[data-v-2f057f64] {\n  background-color: lightgrey;\n}\n.om-list-item[data-v-2f057f64] {\n  font-weight: 500;\n  cursor: pointer;\n}\n.om-list-item[data-v-2f057f64]:hover {\n  background-color: lightgray;\n}\n.om-search[data-v-2f057f64] {\n  vertical-align: middle;\n  background-color: transparent;\n  border: none;\n  overflow: hidden;\n}\n.om-search-container[data-v-2f057f64] {\n  border: 1px solid lightgray;\n  display: flex;\n  padding: 4px 8px;\n  border-radius: 3px;\n}\n.om-has-focus[data-v-2f057f64] {\n  border: 2px solid navy;\n  padding: 3px 7px;\n}\n.om-visually-hidden[data-v-2f057f64]:not(:focus):not(:active) {\n  position: absolute !important;\n  height: 1px;\n  width: 1px;\n  overflow: hidden;\n  clip: rect(1px 1px 1px 1px); /* IE6, IE7 */\n  clip: rect(1px, 1px, 1px, 1px);\n  white-space: nowrap; /* added line */\n}\n",
     map: {
       "version": 3,
       "sources": ["/home/mathis/Development/vue-omnibox/src/Omnibox.vue"],
       "names": [],
       "mappings": ";AAuPA;EACA,sBAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,YAAA;EACA,aAAA;AACA;AACA;EACA,YAAA;EACA,WAAA;EACA,eAAA;EACA,gBAAA;EACA,gBAAA;EACA,gBAAA;EACA,aAAA;EACA,mBAAA;AACA;AACA;EACA,gBAAA;EACA,gBAAA;AACA;AACA;EACA,YAAA;AAEA;AACA;EACA,cAAA;EACA,kBAAA;AACA;AAEA;EACA,WAAA;EACA,WAAA;EACA,eAAA;AACA;AAEA;EACA,WAAA;EACA,WAAA;AACA;AAEA;EACA,cAAA;EACA,YAAA;EACA,WAAA;EACA,WAAA;EACA,eAAA;AACA;AACA;EACA,kBAAA;AACA;AACA;EACA,kBAAA;EACA,WAAA;EACA,gCAAA;EACA,iCAAA;EACA,kCAAA;EACA,gBAAA;EACA,uBAAA;EACA,aAAA;AACA;AACA;EACA,2BAAA;AACA;AACA;EACA,gBAAA;EACA,eAAA;AACA;AAEA;EACA,2BAAA;AACA;AAEA;EACA,sBAAA;EACA,6BAAA;EACA,YAAA;EACA,gBAAA;AACA;AAEA;EACA,2BAAA;EACA,aAAA;EACA,gBAAA;EACA,kBAAA;AACA;AAEA;EACA,sBAAA;EACA,gBAAA;AACA;AAEA;EACA,6BAAA;EACA,WAAA;EACA,UAAA;EACA,gBAAA;EACA,2BAAA,EAAA,aAAA;EACA,8BAAA;EACA,mBAAA,EAAA,eAAA;AACA",
       "file": "Omnibox.vue",
-      "sourcesContent": ["<template>\n  <div class=\"om-root\">\n    <div\n      class=\"om-search-container\"\n      :class=\"{ 'om-has-focus': isInputFocused }\"\n      :style=\"borderColorStyle\">\n      <button type=\"button\" class=\"om-search\" @click.prevent=\"triggerSearch\">\n        <slot name=\"icon\">\n          <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z\"></path></svg>\n        </slot>\n      </button>\n      <div\n        role=\"textbox\"\n        ref=\"input\"\n        class=\"om-input single-line\"\n        :class=\"{\n          'om-visually-hidden': isPlaceholderVisible,\n          'om-width--auto': isInputFocused,\n          'om-width--full': !isInputFocused }\"\n        :style=\"boxHeightStyle\"\n        contenteditable=\"true\"\n        @keydown.stop=\"runSpecialKeys\"\n        @focusin=\"isInputFocused = true\"\n        @focusout=\"isInputFocused = false\">\n      </div>\n      <span\n        v-if=\"isPlaceholderVisible\"\n        @click.stop.prevent=\"focusInput\"\n        class=\"om-placeholder\"\n        :style=\"boxHeightStyle\"\n        aria-hidden=\"true\">{{ placeholder }}</span>\n      <div\n        v-show=\"isInputFocused\"\n        class=\"om-completion\"\n        :style=\"boxHeightStyle\"\n        @click.stop.prevent=\"focusInput\">{{ completion }}</div>\n    </div>\n    <div class=\"om-list-container\">\n      <div\n        class=\"om-list\"\n        :style=\"`border-color: ${borderColor};`\"\n        v-if=\"isOptionsListVisible\">\n        <div\n          v-for=\"(option, idx) in filteredOptions\"\n          class=\"om-list-item\"\n          :class=\"{ 'om-highlight': idx === listPosition }\"\n          :key=\"option[label] + idx\"\n          @mousedown.stop.prevent=\"selectCurrentOption(option)\">\n          <slot name=\"option\" v-bind:option=\"option\">\n            {{ option[label] }}\n          </slot>\n        </div>\n    </div>\n    </div>\n  </div>\n</template>\n<script>\nexport default {\n  props: {\n    borderColor: {\n      type: String,\n      required: false,\n      default: () => 'lightgray'\n    },\n    boxLineHeight: {\n      type: String,\n      required: false,\n      default: () => '28px'\n    },\n    closeOnSelect: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    disableSearch: {\n      type: Boolean,\n      required: false,\n      default: () => false\n    },\n    focusColor: {\n      type: String,\n      required: false,\n      default: () => 'navy'\n    },\n    label: {\n      type: String,\n      required: false,\n      default: () => 'label'\n    },\n    minChars: {\n      type: Number,\n      required: false,\n      default: () => 3\n    },\n    options: {\n      type: Array,\n      required: false,\n      default: () => ([])\n    },\n    placeholder: {\n      type: String,\n      required: false,\n      default: () => 'Search...'\n    },\n    showList: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    tabCompletion: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    value: {\n      type: String,\n      required: false,\n      default: () => ''\n    }\n  },\n  data () {\n    return {\n      currentSearch: this.value,\n      listPosition: -1,\n      isOpenList: true,\n      isInputFocused: false\n    }\n  },\n  computed: {\n    borderColorStyle () {\n      return `border-color: ${this.isInputFocused ? this.focusColor : this.borderColor};`\n    },\n    boxHeightStyle () {\n      return `line-height: ${this.boxLineHeight}; height: ${this.boxLineHeight};`\n    },\n    completion () {\n      const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')\n      return this.options.reduce((acc, val) => {\n        const isMatching = val[this.label].match(reg)\n        if (this.currentSearch === '') return ''\n        if (acc == '' && isMatching) return isMatching[2]\n        if (isMatching && val.length < acc.length) return isMatching[2]\n        return acc\n      }, '')\n    },\n    filteredOptions () {\n      const reg = new RegExp(`^${this.currentSearch}`, 'i')\n      const filtered = this.options.filter(o => o[this.label].match(reg))\n      return this.disableSearch ? this.options : filtered\n    },\n    isOptionsListVisible () {\n      return this.currentSearch.length >= this.minChars && this.showList && this.isOpenList && this.filteredOptions.length > 0 && this.isInputFocused\n    },\n    isPlaceholderVisible () {\n      return (!this.isInputFocused && this.currentSearch.length === 0)\n    }\n  },\n  watch: {\n    value () {\n      this.currentSearch = this.value\n      this.setTextContent(this.value)\n    }\n  },\n  methods: {\n    focusInput () {\n      const el = this.$refs.input\n      if (this.currentSearch !== '') {\n        let range = document.createRange()\n        let sel = window.getSelection()\n        let node = el.childNodes[0]\n        range.setStart(node, node.textContent.length)\n        range.collapse(true)\n        sel.removeAllRanges()\n        sel.addRange(range)\n      }\n      el.focus()\n    },\n    getTextContent (el = this.$refs.input) {\n      return el.textContent\n    },\n    runSpecialKeys (e) {\n      const key = e.key\n      if (key === 'Tab' && this.tabCompletion && this.completion !== '') {\n        e.preventDefault()\n        this.currentSearch += this.completion\n        this.setTextContent(this.currentSearch)\n        this.focusInput()\n      } else if (key === 'ArrowDown' || key === 'Down') {\n        e.preventDefault()\n        if (this.listPosition < this.filteredOptions.length - 1) {\n          this.listPosition += 1\n        }\n      } else if (key === \"ArrowUp\" || key === 'Up') {\n          e.preventDefault()\n          if (this.listPosition > -1) {\n            this.listPosition -= 1\n          }\n      } else if (key === 'Enter') {\n        e.preventDefault()\n        if (this.listPosition > -1) {\n          this.selectCurrentOption()\n        } else {\n          this.triggerSearch()\n        }\n      }\n    },\n    selectCurrentOption (option = this.filteredOptions[this.listPosition]) {\n      this.currentSearch = option[this.label]\n      this.setTextContent(this.currentSearch)\n      this.listPosition = -1\n      this.$emit('selected', option)\n      this.isOpenList = !this.closeOnSelect\n      this.focusInput()\n    },\n    setTextContent (value, el = this.$refs.input) {\n      el.textContent = value\n    },\n    triggerSearch () {\n      this.$emit('searched', this.currentSearch)\n      this.isOpenList = !this.closeOnSelect\n    },\n    updateValue (e) {\n      const content = this.getTextContent()\n      if (content !== this.currentSearch) {\n        this.currentSearch = content\n        this.isOpenList = true\n        this.$emit('input', this.currentSearch)\n      }\n    }\n  },\n  mounted () {\n    const observer = new MutationObserver((mutations) => {\n      mutations.forEach((mutation) => {\n        const onlyTextAdded = Array.prototype.slice.call(mutation.addedNodes).filter(n => n.nodeType !== 3).length === 0\n        const onlyTextRemoved = Array.prototype.slice.call(mutation.removedNodes).filter(n => n.nodeType !== 3).length === 0\n        const isTextInput = mutation.type === 'characterData' || (onlyTextAdded && onlyTextRemoved)\n        if (isTextInput) {\n          this.updateValue()\n        }\n      });\n    });\n\n    observer.observe(this.$refs.input, { childList: true, characterData: true, subtree: true })\n  }\n}\n</script>\n<style scoped>\n  * {\n    box-sizing: border-box;\n  }\n  .om-root {\n    position: relative;\n  }\n  .om-input:focus {\n    border: none;\n    outline: none;\n  }\n  .om-completion {\n    height: 100%;\n    width: auto;\n    max-width: 100%;\n    color: lightgray;\n    overflow: hidden;\n    white-space: pre;\n    display: flex;\n    align-items: center;\n  }\n  [contenteditable=\"true\"].single-line {\n    white-space: pre;\n    overflow: hidden;\n  } \n  [contenteditable=\"true\"].single-line br {\n    display:none;\n\n  }\n  [contenteditable=\"true\"].single-line * {\n    display:inline;\n    white-space:nowrap;\n  }\n\n  .om-width--auto {\n    width: auto;\n    float: left;\n    min-width: 10px;\n  }\n\n  .om-width--full {\n    float: left;\n    width: 100%;\n  }\n\n  .om-placeholder {\n    display: block;\n    height: 100%;\n    width: 100%;\n    float: left;\n    color: darkgray;\n  }\n  .om-list-container {\n    position: relative;\n  }\n  .om-list {\n    position: absolute;\n    width: 100%;\n    border-left: 1px solid lightgray;\n    border-right: 1px solid lightgray;\n    border-bottom: 1px solid lightgray;\n    padding: 4px 8px;\n    background-color: white;\n    z-index: 1001;\n  }\n  .om-highlight {\n    background-color: lightgrey;\n  }\n  .om-list-item {\n    font-weight: 500;\n    cursor: pointer;\n  }\n\n  .om-list-item:hover {\n    background-color: lightgray;\n  }\n\n  .om-search {\n    vertical-align: middle;\n    background-color: transparent;\n    border: none;\n    overflow: hidden;\n  }\n\n  .om-search-container {\n    border: 1px solid lightgray;\n    display: flex;\n    padding: 4px 8px;\n    border-radius: 3px;\n  }\n\n  .om-has-focus {\n    border: 2px solid navy;\n    padding: 3px 7px;\n  }\n\n  .om-visually-hidden:not(:focus):not(:active) { \n    position: absolute !important;\n    height: 1px; \n    width: 1px;\n    overflow: hidden;\n    clip: rect(1px 1px 1px 1px); /* IE6, IE7 */\n    clip: rect(1px, 1px, 1px, 1px);\n    white-space: nowrap; /* added line */\n  }\n</style>\n"]
+      "sourcesContent": ["<template>\n  <div class=\"om-root\" :style=\"boxHeightStyle\">\n    <div\n      class=\"om-search-container\"\n      :class=\"{ 'om-has-focus': isInputFocused }\"\n      :style=\"borderColorStyle\">\n      <button type=\"button\" class=\"om-search\" @click.prevent=\"triggerSearch\">\n        <slot name=\"icon\">\n          <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M15.7 13.3l-3.81-3.83A5.93 5.93 0 0013 6c0-3.31-2.69-6-6-6S1 2.69 1 6s2.69 6 6 6c1.3 0 2.48-.41 3.47-1.11l3.83 3.81c.19.2.45.3.7.3.25 0 .52-.09.7-.3a.996.996 0 000-1.41v.01zM7 10.7c-2.59 0-4.7-2.11-4.7-4.7 0-2.59 2.11-4.7 4.7-4.7 2.59 0 4.7 2.11 4.7 4.7 0 2.59-2.11 4.7-4.7 4.7z\"></path></svg>\n        </slot>\n      </button>\n      <div\n        role=\"textbox\"\n        ref=\"input\"\n        class=\"om-input single-line\"\n        :class=\"{\n          'om-visually-hidden': isPlaceholderVisible,\n          'om-width--auto': isInputFocused,\n          'om-width--full': !isInputFocused }\"\n        contenteditable=\"true\"\n        @keydown.stop=\"runSpecialKeys\"\n        @focusin=\"isInputFocused = true\"\n        @focusout=\"isInputFocused = false\">\n      </div>\n      <span\n        v-if=\"isPlaceholderVisible\"\n        @click.stop.prevent=\"focusInput\"\n        class=\"om-placeholder\"\n        aria-hidden=\"true\">{{ placeholder }}</span>\n      <div\n        v-show=\"isInputFocused\"\n        class=\"om-completion\"\n        @click.stop.prevent=\"focusInput\">{{ completion }}</div>\n    </div>\n    <div class=\"om-list-container\">\n      <div\n        class=\"om-list\"\n        :style=\"`border-color: ${borderColor};`\"\n        v-if=\"isOptionsListVisible\">\n        <div\n          v-for=\"(option, idx) in filteredOptions\"\n          class=\"om-list-item\"\n          :class=\"{ 'om-highlight': idx === listPosition }\"\n          :key=\"option[label] + idx\"\n          @mousedown.stop.prevent=\"selectCurrentOption(option)\">\n          <slot name=\"option\" v-bind:option=\"option\">\n            {{ option[label] }}\n          </slot>\n        </div>\n    </div>\n    </div>\n  </div>\n</template>\n<script>\nexport default {\n  props: {\n    borderColor: {\n      type: String,\n      required: false,\n      default: () => 'lightgray'\n    },\n    boxHeight: {\n      type: String,\n      required: false,\n      default: () => '28px'\n    },\n    closeOnSelect: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    disableSearch: {\n      type: Boolean,\n      required: false,\n      default: () => false\n    },\n    focusColor: {\n      type: String,\n      required: false,\n      default: () => 'navy'\n    },\n    label: {\n      type: String,\n      required: false,\n      default: () => 'label'\n    },\n    minChars: {\n      type: Number,\n      required: false,\n      default: () => 3\n    },\n    options: {\n      type: Array,\n      required: false,\n      default: () => ([])\n    },\n    placeholder: {\n      type: String,\n      required: false,\n      default: () => 'Search...'\n    },\n    showList: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    tabCompletion: {\n      type: Boolean,\n      required: false,\n      default: () => true\n    },\n    value: {\n      type: String,\n      required: false,\n      default: () => ''\n    }\n  },\n  data () {\n    return {\n      currentSearch: this.value,\n      listPosition: -1,\n      isOpenList: true,\n      isInputFocused: false\n    }\n  },\n  computed: {\n    borderColorStyle () {\n      return `border-color: ${this.isInputFocused ? this.focusColor : this.borderColor};`\n    },\n    boxHeightStyle () {\n      return `height: ${this.boxHeight};`\n    },\n    completion () {\n      const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')\n      return this.options.reduce((acc, val) => {\n        const isMatching = val[this.label].match(reg)\n        if (this.currentSearch === '') return ''\n        if (acc == '' && isMatching) return isMatching[2]\n        if (isMatching && val.length < acc.length) return isMatching[2]\n        return acc\n      }, '')\n    },\n    filteredOptions () {\n      const reg = new RegExp(`^${this.currentSearch}`, 'i')\n      const filtered = this.options.filter(o => o[this.label].match(reg))\n      return this.disableSearch ? this.options : filtered\n    },\n    isOptionsListVisible () {\n      return this.currentSearch.length >= this.minChars && this.showList && this.isOpenList && this.filteredOptions.length > 0 && this.isInputFocused\n    },\n    isPlaceholderVisible () {\n      return (!this.isInputFocused && this.currentSearch.length === 0)\n    }\n  },\n  watch: {\n    value () {\n      if (this.currentSearch !== this.value) {\n        this.currentSearch = this.value\n        this.setTextContent(this.value)\n        this.focusInput()\n      }\n    }\n  },\n  methods: {\n    focusInput () {\n      const el = this.$refs.input\n      if (this.currentSearch !== '') {\n        let range = document.createRange()\n        let sel = window.getSelection()\n        let node = el.childNodes[0]\n        range.setStart(node, node.textContent.length)\n        range.collapse(true)\n        sel.removeAllRanges()\n        sel.addRange(range)\n      }\n      el.focus()\n    },\n    getTextContent (el = this.$refs.input) {\n      return el.textContent\n    },\n    runSpecialKeys (e) {\n      const key = e.key\n      if (key === 'Tab' && this.tabCompletion && this.completion !== '') {\n        e.preventDefault()\n        this.currentSearch += this.completion\n        this.setTextContent(this.currentSearch)\n        this.focusInput()\n      } else if (key === 'ArrowDown' || key === 'Down') {\n        e.preventDefault()\n        if (this.listPosition < this.filteredOptions.length - 1) {\n          this.listPosition += 1\n        }\n      } else if (key === \"ArrowUp\" || key === 'Up') {\n          e.preventDefault()\n          if (this.listPosition > -1) {\n            this.listPosition -= 1\n          }\n      } else if (key === 'Enter') {\n        e.preventDefault()\n        if (this.listPosition > -1) {\n          this.selectCurrentOption()\n        } else {\n          this.triggerSearch()\n        }\n      }\n    },\n    selectCurrentOption (option = this.filteredOptions[this.listPosition]) {\n      this.currentSearch = option[this.label]\n      this.setTextContent(this.currentSearch)\n      this.listPosition = -1\n      this.$emit('selected', option)\n      this.isOpenList = !this.closeOnSelect\n      this.focusInput()\n    },\n    setTextContent (value, el = this.$refs.input) {\n      el.textContent = value\n    },\n    triggerSearch () {\n      this.$emit('searched', this.currentSearch)\n      this.isOpenList = !this.closeOnSelect\n    },\n    updateValue (e) {\n      const content = this.getTextContent()\n      if (content !== this.currentSearch) {\n        this.currentSearch = content\n        this.isOpenList = true\n        this.$emit('input', this.currentSearch)\n      }\n    }\n  },\n  mounted () {\n    const observer = new MutationObserver((mutations) => {\n      mutations.forEach((mutation) => {\n        const onlyTextAdded = Array.prototype.slice.call(mutation.addedNodes).filter(n => n.nodeType !== 3).length === 0\n        const onlyTextRemoved = Array.prototype.slice.call(mutation.removedNodes).filter(n => n.nodeType !== 3).length === 0\n        const isTextInput = mutation.type === 'characterData' || (onlyTextAdded && onlyTextRemoved)\n        if (isTextInput) {\n          this.updateValue()\n        }\n      });\n    });\n\n    observer.observe(this.$refs.input, { childList: true, characterData: true, subtree: true })\n  }\n}\n</script>\n<style scoped>\n  * {\n    box-sizing: border-box;\n  }\n  .om-root {\n    position: relative;\n  }\n  .om-input:focus {\n    border: none;\n    outline: none;\n  }\n  .om-completion {\n    height: 100%;\n    width: auto;\n    max-width: 100%;\n    color: lightgray;\n    overflow: hidden;\n    white-space: pre;\n    display: flex;\n    align-items: center;\n  }\n  [contenteditable=\"true\"].single-line {\n    white-space: pre;\n    overflow: hidden;\n  }\n  [contenteditable=\"true\"].single-line br {\n    display:none;\n\n  }\n  [contenteditable=\"true\"].single-line * {\n    display:inline;\n    white-space:nowrap;\n  }\n\n  .om-width--auto {\n    width: auto;\n    float: left;\n    min-width: 10px;\n  }\n\n  .om-width--full {\n    float: left;\n    width: 100%;\n  }\n\n  .om-placeholder {\n    display: block;\n    height: 100%;\n    width: 100%;\n    float: left;\n    color: darkgray;\n  }\n  .om-list-container {\n    position: relative;\n  }\n  .om-list {\n    position: absolute;\n    width: 100%;\n    border-left: 1px solid lightgray;\n    border-right: 1px solid lightgray;\n    border-bottom: 1px solid lightgray;\n    padding: 4px 8px;\n    background-color: white;\n    z-index: 1001;\n  }\n  .om-highlight {\n    background-color: lightgrey;\n  }\n  .om-list-item {\n    font-weight: 500;\n    cursor: pointer;\n  }\n\n  .om-list-item:hover {\n    background-color: lightgray;\n  }\n\n  .om-search {\n    vertical-align: middle;\n    background-color: transparent;\n    border: none;\n    overflow: hidden;\n  }\n\n  .om-search-container {\n    border: 1px solid lightgray;\n    display: flex;\n    padding: 4px 8px;\n    border-radius: 3px;\n  }\n\n  .om-has-focus {\n    border: 2px solid navy;\n    padding: 3px 7px;\n  }\n\n  .om-visually-hidden:not(:focus):not(:active) {\n    position: absolute !important;\n    height: 1px;\n    width: 1px;\n    overflow: hidden;\n    clip: rect(1px 1px 1px 1px); /* IE6, IE7 */\n    clip: rect(1px, 1px, 1px, 1px);\n    white-space: nowrap; /* added line */\n  }\n</style>\n"]
     },
     media: undefined
   });
@@ -2231,7 +2179,7 @@ var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
 /* scoped */
 
 
-var __vue_scope_id__ = "data-v-4ec0e49d";
+var __vue_scope_id__ = "data-v-2f057f64";
 /* module identifier */
 
 var __vue_module_identifier__ = undefined;

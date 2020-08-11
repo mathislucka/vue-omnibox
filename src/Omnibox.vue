@@ -1,5 +1,5 @@
 <template>
-  <div class="om-root">
+  <div class="om-root" :style="boxHeightStyle">
     <div
       class="om-search-container"
       :class="{ 'om-has-focus': isInputFocused }"
@@ -17,7 +17,6 @@
           'om-visually-hidden': isPlaceholderVisible,
           'om-width--auto': isInputFocused,
           'om-width--full': !isInputFocused }"
-        :style="boxHeightStyle"
         contenteditable="true"
         @keydown.stop="runSpecialKeys"
         @focusin="isInputFocused = true"
@@ -27,12 +26,10 @@
         v-if="isPlaceholderVisible"
         @click.stop.prevent="focusInput"
         class="om-placeholder"
-        :style="boxHeightStyle"
         aria-hidden="true">{{ placeholder }}</span>
       <div
         v-show="isInputFocused"
         class="om-completion"
-        :style="boxHeightStyle"
         @click.stop.prevent="focusInput">{{ completion }}</div>
     </div>
     <div class="om-list-container">
@@ -62,7 +59,7 @@ export default {
       required: false,
       default: () => 'lightgray'
     },
-    boxLineHeight: {
+    boxHeight: {
       type: String,
       required: false,
       default: () => '28px'
@@ -131,7 +128,7 @@ export default {
       return `border-color: ${this.isInputFocused ? this.focusColor : this.borderColor};`
     },
     boxHeightStyle () {
-      return `line-height: ${this.boxLineHeight}; height: ${this.boxLineHeight};`
+      return `height: ${this.boxHeight};`
     },
     completion () {
       const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')
@@ -157,8 +154,11 @@ export default {
   },
   watch: {
     value () {
-      this.currentSearch = this.value
-      this.setTextContent(this.value)
+      if (this.currentSearch !== this.value) {
+        this.currentSearch = this.value
+        this.setTextContent(this.value)
+        this.focusInput()
+      }
     }
   },
   methods: {
@@ -268,7 +268,7 @@ export default {
   [contenteditable="true"].single-line {
     white-space: pre;
     overflow: hidden;
-  } 
+  }
   [contenteditable="true"].single-line br {
     display:none;
 
@@ -340,9 +340,9 @@ export default {
     padding: 3px 7px;
   }
 
-  .om-visually-hidden:not(:focus):not(:active) { 
+  .om-visually-hidden:not(:focus):not(:active) {
     position: absolute !important;
-    height: 1px; 
+    height: 1px;
     width: 1px;
     overflow: hidden;
     clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
