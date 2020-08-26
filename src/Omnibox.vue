@@ -6,7 +6,7 @@
       :style="isInputFocused ? focusStyle : borderColorStyle">
       <label
         for="input-box"
-        @click.stop.prevent="focusInput"
+        @mousedown.stop.prevent="focusInput"
         :class="{ 'om-placeholder': isPlaceholderVisible, 'om-visually-hidden': !isPlaceholderVisible}">{{ placeholder }}</label>
       <div
         id="input-box"
@@ -19,16 +19,17 @@
           'om-width--full': !isInputFocused }"
         contenteditable="true"
         :style="boxHeightStyle"
-        @click.stop.prevent="focusInput"
+        @mousedown.stop.prevent="focusInput"
         @keydown.stop="runSpecialKeys"
         @focusin="isInputFocused = true"
         @focusout="isInputFocused = false">
+        <br>
       </div>
       <div
         v-show="isInputFocused"
         class="om-completion"
         :style="boxHeightStyle"
-        @click.stop.prevent="focusInput">{{ completion }}</div>
+        @mousedown.stop.prevent="focusInput">{{ completion }}</div>
     </div>
     <div class="om-list-container">
       <div
@@ -178,6 +179,11 @@ export default {
         sel.addRange(range)
       }
       el.focus()
+      if (el.textContent === '') {
+        let text = el.textContent + ' '
+        el.textContent =  text
+        el.textContent = text.substring(0, text.length - 1)
+      }
     },
     getTextContent (el = this.$refs.input) {
       return el.textContent
