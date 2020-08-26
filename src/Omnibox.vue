@@ -19,6 +19,7 @@
           'om-width--full': !isInputFocused }"
         contenteditable="true"
         :style="boxHeightStyle"
+        @click.stop.prevent="focusInput"
         @keydown.stop="runSpecialKeys"
         @focusin="isInputFocused = true"
         @focusout="isInputFocused = false">
@@ -348,10 +349,6 @@ export default {
     border-radius: 3px;
     height: 100%;
     padding-right: 8px;
-  }
-
-  .om-has-focus {
-    box-shadow: 0 0 0 2px deeppink;
   }
 
   .om-visually-hidden:not(:focus):not(:active) {
