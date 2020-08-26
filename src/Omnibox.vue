@@ -4,7 +4,12 @@
       class="om-search-container"
       :class="{ 'om-has-focus': isInputFocused }"
       :style="borderColorStyle">
+      <label
+        for="input-box"
+        @click.stop.prevent="focusInput"
+        :class="{ 'om-placeholder': isPlaceholderVisible, 'om-visually-hidden': !isPlaceholderVisible}">{{ placeholder }}</label>
       <span
+        id="input-box"
         role="textbox"
         ref="input"
         class="om-input single-line"
@@ -17,11 +22,6 @@
         @focusin="isInputFocused = true"
         @focusout="isInputFocused = false">
       </span>
-      <span
-        v-if="isPlaceholderVisible"
-        @click.stop.prevent="focusInput"
-        class="om-placeholder"
-        aria-hidden="true">{{ placeholder }}</span>
       <div
         v-show="isInputFocused"
         class="om-completion"
@@ -303,6 +303,7 @@ export default {
     color: darkgray;
     display: flex;
     align-items: center;
+    margin: 0;
   }
   .om-list-container {
     position: relative;
