@@ -3,12 +3,12 @@
     <div
       class="om-search-container"
       :class="{ 'om-has-focus': isInputFocused }"
-      :style="borderColorStyle">
+      :style="isInputFocused ? focusStyle : borderColorStyle">
       <label
         for="input-box"
         @click.stop.prevent="focusInput"
         :class="{ 'om-placeholder': isPlaceholderVisible, 'om-visually-hidden': !isPlaceholderVisible}">{{ placeholder }}</label>
-      <span
+      <div
         id="input-box"
         role="textbox"
         ref="input"
@@ -18,13 +18,15 @@
           'om-width--auto': isInputFocused,
           'om-width--full': !isInputFocused }"
         contenteditable="true"
+        :style="boxHeightStyle"
         @keydown.stop="runSpecialKeys"
         @focusin="isInputFocused = true"
         @focusout="isInputFocused = false">
-      </span>
+      </div>
       <div
         v-show="isInputFocused"
         class="om-completion"
+        :style="boxHeightStyle"
         @click.stop.prevent="focusInput">{{ completion }}</div>
     </div>
     <div class="om-list-container">
@@ -120,10 +122,16 @@ export default {
   },
   computed: {
     borderColorStyle () {
-      return `border-color: ${this.isInputFocused ? this.focusColor : this.borderColor};`
+      return `border-color: ${this.borderColor}`
+    },
+    focusStyle () {
+      return `border-color: ${this.focusColor}; box-shadow: 0 0 0 1px ${this.focusColor};`
+    },
+    boxHeightNumber () {
+      return parseInt(this.boxHeight.replace('px', ''))
     },
     boxHeightStyle () {
-      return `height: ${this.boxHeight};`
+      return `height: ${this.boxHeight}; line-height: ${this.boxHeightNumber - 8}px;`
     },
     completion () {
       const reg = new RegExp(`^(${this.currentSearch})(.+)`, 'i')
@@ -248,9 +256,10 @@ export default {
   }
 
   .om-input {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 8px;
     height: 100%;
-    display: flex;
-    align-items: center;
   }
   .om-input:focus {
     border: none;
@@ -266,6 +275,8 @@ export default {
     height: 100%;
     width: auto;
     max-width: 100%;
+    padding-top: 4px;
+    padding-bottom: 4px;
     color: lightgray;
     overflow: hidden;
     white-space: pre;
@@ -291,7 +302,6 @@ export default {
   }
 
   .om-width--full {
-    float: left;
     width: 100%;
   }
 
@@ -304,6 +314,7 @@ export default {
     display: flex;
     align-items: center;
     margin: 0;
+    padding: 4px 8px;
   }
   .om-list-container {
     position: relative;
@@ -333,14 +344,14 @@ export default {
   .om-search-container {
     border: 1px solid lightgray;
     display: flex;
-    padding: 4px 8px;
+    padding: 0;
     border-radius: 3px;
     height: 100%;
+    padding-right: 8px;
   }
 
   .om-has-focus {
-    border: 2px solid navy;
-    padding: 3px 7px;
+    box-shadow: 0 0 0 2px deeppink;
   }
 
   .om-visually-hidden:not(:focus):not(:active) {
