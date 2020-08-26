@@ -22,7 +22,6 @@
         :style="boxHeightStyle"
         @mousedown.stop.prevent="focusInput"
         @keydown.stop="runSpecialKeys"
-        @focusin="isInputFocused = true"
         @focusout="isInputFocused = false">
         <br>
       </div>
@@ -169,22 +168,20 @@ export default {
   },
   methods: {
     focusInput () {
-      const el = this.$refs.input
-      if (this.currentSearch !== '') {
-        let range = document.createRange()
-        let sel = window.getSelection()
-        let node = el.childNodes[0]
-        range.setStart(node, node.textContent.length)
-        range.collapse(true)
-        sel.removeAllRanges()
-        sel.addRange(range)
-      }
-      el.focus()
-      if (el.textContent === '') {
-        let text = el.textContent + ' '
-        el.textContent =  text
-        el.textContent = text.substring(0, text.length - 1)
-      }
+      this.isInputFocused = true
+      this.$nextTick(() => {
+        const el = this.$refs.input
+        if (this.currentSearch !== '' || true) {
+          let range = document.createRange()
+          let sel = window.getSelection()
+          let node = el.childNodes[0]
+          range.setStart(node, node.textContent.length)
+          range.collapse(true)
+          sel.removeAllRanges()
+          sel.addRange(range)
+        }
+        el.focus()
+      })
     },
     getTextContent (el = this.$refs.input) {
       return el.textContent
@@ -275,9 +272,9 @@ export default {
   }
 
   /* This is needed because in firefox the caret position is not vertically centered when the span is empty */
-  .om-input:before {
+  /* .om-input:before {
     content: ' '
-  }
+  } */
 
   .om-completion {
     height: 100%;
