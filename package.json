@@ -1,6 +1,6 @@
 {
   "name": "vue-omnibox",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "A search box for Vue applications.",
   "main": "dist/index.esm.min.js",
   "repository": {},

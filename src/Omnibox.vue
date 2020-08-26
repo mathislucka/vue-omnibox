@@ -171,7 +171,7 @@ export default {
       this.isInputFocused = true
       this.$nextTick(() => {
         const el = this.$refs.input
-        if (this.currentSearch !== '' || true) {
+        if (this.currentSearch !== '') {
           let range = document.createRange()
           let sel = window.getSelection()
           let node = el.childNodes[0]
