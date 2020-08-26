@@ -23,7 +23,6 @@
         @mousedown.stop.prevent="focusInput"
         @keydown.stop="runSpecialKeys"
         @focusout="isInputFocused = false">
-        <br>
       </div>
       <div
         v-show="isInputFocused"
@@ -169,8 +168,8 @@ export default {
   methods: {
     focusInput () {
       this.isInputFocused = true
+      const el = this.$refs.input
       this.$nextTick(() => {
-        const el = this.$refs.input
         if (this.currentSearch !== '') {
           let range = document.createRange()
           let sel = window.getSelection()
@@ -272,9 +271,9 @@ export default {
   }
 
   /* This is needed because in firefox the caret position is not vertically centered when the span is empty */
-  /* .om-input:before {
+  .om-input:before {
     content: ' '
-  } */
+  }
 
   .om-completion {
     height: 100%;
