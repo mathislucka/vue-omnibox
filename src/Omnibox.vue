@@ -2,6 +2,7 @@
   <div class="om-root" :style="boxHeightStyle">
     <div
       class="om-search-container"
+      @mousedown.stop.prevent="focusInput"
       :class="{ 'om-has-focus': isInputFocused }"
       :style="isInputFocused ? focusStyle : borderColorStyle">
       <label
